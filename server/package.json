@@ -1,0 +1,23 @@
+{
+  "name": "datapack-maker-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.0.3",
+    "groq-sdk": "^1.6.0",
+    "helmet": "^8.0.3",
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^4.6.2"
+  }
+}

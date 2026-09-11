@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0d1117;
+  --panel: #151b23;
+  --panel-2: #1c242f;
+  --border: #2a3441;
+  --text: #e6edf3;
+  --muted: #8b98a9;
+  --accent: #4ade80;
+  --accent-2: #22c55e;
+  --danger: #f87171;
+  --warn: #fbbf24;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  margin: 0;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* === Editeur mcfunction : coloration === */
+.cm-editor { height: 100%; font-size: 14px; }
+.cm-editor .cm-scroller { font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace; }
+.cm-editor.cm-focused { outline: none !important; }
+
+.mc-cmd { color: #7aa2f7; font-weight: 600; }          /* commande execute, tellraw... */
+.mc-sub { color: #bb9af7; }                              /* sous-commandes/args mots-cles */
+.mc-selector { color: #e0af68; }                         /* @a, @s... */
+.mc-string { color: #9ece6a; }                          /* chaines */
+.mc-nbtkey { color: #73daca; }                          /* cles NBT */
+.mc-number { color: #ff9e64; }                          /* nombres */
+.mc-comment { color: #565f89; font-style: italic; }    /* # commentaire */
+.mc-macro { color: #f7768e; font-weight: 600; }         /* $(variable) 1.20.2+ */
+.mc-bool { color: #f7768e; }                            /* true/false */
+.mc-jsonkey { color: #73daca; }
+
+/* Ghost text autocompletion IA */
+.cm-ai-ghost {
+  color: #6b7688;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+/* Boutons utilitaires */
+.btn { border-radius: 0.5rem; padding: 0.5rem 1rem; font-weight: 600; transition: all .15s; cursor: pointer; }
+.btn-primary { background: var(--accent-2); color: #04140a; }
+.btn-primary:hover { background: var(--accent); }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--panel-2); }
+.btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+.btn-danger:hover { background: rgba(248,113,113,.1); }
+.input { background: var(--panel-2); border: 1px solid var(--border); border-radius: .5rem; padding: .5rem .75rem; color: var(--text); width: 100%; }
+.input:focus { outline: none; border-color: var(--accent-2); }
+.label { color: var(--muted); font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .35rem; display: block; }
