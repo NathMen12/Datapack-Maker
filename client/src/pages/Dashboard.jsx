@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Braces, ChevronRight, CloudUpload, HardDrive, LogOut, Sparkles } from 'lucide-react';
+import { Braces, ChevronRight, CloudUpload, FolderKanban, HardDrive, LogOut, Sparkles } from 'lucide-react';
 import { useAuth } from '../stores/auth.js';
 import { useProjects } from '../stores/projects.js';
 import { api } from '../api/client.js';
@@ -94,7 +94,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <h2 className="text-xl font-bold mb-4">{t('dashboard.projects')}</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">{t('dashboard.projects')}</h2>
+          <Link to="/projects" className="btn btn-ghost !py-1.5 text-sm flex items-center gap-1 anim-fade-in">
+            <FolderKanban size={14} /> {t('dashboard.manageProjects')}
+          </Link>
+        </div>
         {projects.length === 0 ? (
           <p style={{ color: 'var(--muted)' }}>{t('dashboard.noProjects')}</p>
         ) : (

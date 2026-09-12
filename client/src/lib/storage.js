@@ -82,7 +82,7 @@ export const localDB = {
   async createProject(data) {
     const db = await getDB();
     const now = new Date().toISOString();
-    return guarded(() =>
+    const id = await guarded(() =>
       db.add('projects', {
         name: data.name,
         namespace: data.namespace,
@@ -93,6 +93,8 @@ export const localDB = {
         updated_at: now,
       })
     );
+    /* Retourne l'objet complet (id inclus), pas seulement la cle generee. */
+    return db.get('projects', id);
   },
 
   async updateProject(id, patch) {
@@ -133,17 +135,30 @@ export const localDB = {
   async saveFiles(projectId, saves, deletes = []) {
     const db = await getDB();
     await guarded(async () => {
-      const tx = db.transaction(['files', 'projects'], 'readwrite');
-      const files = tx.objectStore('files');
+      /* 1) Compresser AVANT d'ouvrir la transaction.
+         Le gzip (CompressionStream) traverse plusieurs macrotaches :
+         une transaction IndexedDB se fermerait automatiquement pendant
+         l'attente, et les put suivants echoueraient avec
+         "A request was placed against a transaction which is currently
+         not active, or which is finished". */
+      const prepared = [];
       for (const f of saves) {
         const { data, compressed } = await gzip(f.content);
-        await files.put({ projectId, path: f.path, data, compressed });
+        prepared.push({ projectId, path: f.path, data, compressed });
       }
-      for (const p of deletes) await files.delete([projectId, p]);
-      await tx.objectStore('projects').put({
-        ...(await tx.objectStore('projects').get(projectId)),
-        updated_at: new Date().toISOString(),
-      });
+
+      /* 2) Verifier le projet HORS transaction. */
+      const row = await db.get('projects', projectId);
+      /* Projet introuvable : on echoue proprement (pas de projet fantome). */
+      if (!row) throw new Error('project_not_found');
+
+      /* 3) Ouvrir la transaction et tout ecrire d'un bloc,
+         sans aucune operation async non-IDB a l'interieur. */
+      const tx = db.transaction(['files', 'projects'], 'readwrite');
+      const files = tx.objectStore('files');
+      for (const rec of prepared) files.put(rec);
+      for (const del of deletes) files.delete([projectId, del]);
+      tx.objectStore('projects').put({ ...row, updated_at: new Date().toISOString() });
       await tx.done;
     });
   },

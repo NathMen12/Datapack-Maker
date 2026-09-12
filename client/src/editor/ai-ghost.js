@@ -31,8 +31,9 @@ const ghostField = StateField.define({
 });
 
 function ghostDeco(state) {
-  const { text, pos } = state.field(ghostField);
-  if (!text || pos > state.doc.length) return Decoration.none;
+  const field = state.field(ghostField, false);
+  if (!field || !field.text || field.pos > state.doc.length) return Decoration.none;
+  const { text, pos } = field;
   return Decoration.set([
     Decoration.widget({ widget: new GhostWidget(text), side: 1 }).range(pos),
   ]);
@@ -113,6 +114,7 @@ export function makeAIVoiceExtension({ fetchCompletion, getEnabled, getDelay, on
   }
 
   return [
+    ghostField, /* StateField OBLIGATOIRE : sinon "Field is not present in this state" */
     aiGhostKeymap,
     ghostDecoExtension,
     EditorView.updateListener.of((update) => {

@@ -53,15 +53,17 @@ export default function Studio() {
   useEffect(() => {
     if (!projects.length || activeProject) return;
     const wanted = searchParams.get('project');
-    const target = (wanted && projects.find((p) => p.id === wanted)) || projects[0];
+    const target = (wanted && projects.find((p) => String(p.id) === wanted)) || projects[0];
     if (target) openProject(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects]);
 
   async function openProject(p) {
+    /* Activer le projet AVANT le chargement des fichiers : meme si le
+       chargement echoue, activeProject n'est jamais null (fix "d is null"). */
+    setActiveProject(p);
     try {
       const list = await getFiles(p.id);
-      setActiveProject(p);
       setFiles(list);
       const first = list.find((f) => f.path.endsWith('.mcfunction')) || list[0];
       if (first) { setActivePath(first.path); setContent(first.content); }
@@ -266,7 +268,7 @@ export default function Studio() {
             {activeProject ? activeProject.name : t('app.openStudio')}
             {activeProject && <span className="ml-2" style={{ color: 'var(--muted)' }}>{activeProject.namespace}</span>}
           </span>
-          {saving && <span className="text-xs" style={{ color: 'var(--muted)' }}>{t('projects.saving')}</span>}
+          {saving && <span className="text-xs anim-saving" style={{ color: 'var(--muted)' }}>{t('projects.saving')}</span>}
         </div>
         <div className="flex items-center gap-2">
           {user ? (
@@ -369,7 +371,7 @@ export default function Studio() {
       {/* Toast */}
       {toast && (
         <div
-          className="fixed bottom-4 right-4 z-50 max-w-md rounded-lg px-4 py-3 flex items-start gap-2 text-sm shadow-xl"
+          className="fixed bottom-4 right-4 z-50 max-w-md rounded-lg px-4 py-3 flex items-start gap-2 text-sm shadow-xl toast-anim"
           style={{
             background: 'var(--panel)',
             border: `1px solid ${toast.kind === 'error' ? 'var(--danger)' : 'var(--accent-2)'}`,

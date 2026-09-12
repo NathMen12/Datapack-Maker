@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, File, FilePlus2, Folder, FolderPlus, Trash2, Pencil } from 'lucide-react';
+import { ChevronRight, File, FilePlus2, Folder, FolderPlus, Trash2, Pencil } from 'lucide-react';
 
 /* Construit un arbre {name, children, path, isFile} depuis les chemins plats. */
 export function buildTree(paths) {
@@ -47,7 +47,7 @@ export default function FileTree({ files, activePath, onOpen, onNewFile, onNewFo
       return (
         <div key={node.path}>
           <div
-            className="flex items-center gap-1 px-2 py-1 cursor-pointer rounded text-sm hover:bg-[var(--panel-2)] group"
+            className="flex items-center gap-1 px-2 py-1 cursor-pointer rounded text-sm tree-row group"
             style={{
               paddingLeft: `${8 + depth * 14}px`,
               background: activePath === node.path ? 'var(--panel-2)' : undefined,
@@ -56,10 +56,10 @@ export default function FileTree({ files, activePath, onOpen, onNewFile, onNewFo
           >
             {node.isFile ? (
               <File size={14} className="shrink-0" style={{ color: 'var(--muted)' }} />
-            ) : isCollapsed ? (
-              <ChevronRight size={14} className="shrink-0" />
             ) : (
-              <ChevronDown size={14} className="shrink-0" />
+              <span className={`shrink-0 inline-block tree-chevron ${isCollapsed ? '' : 'tree-chevron-open'}`}>
+                <ChevronRight size={14} />
+              </span>
             )}
             {!node.isFile && <Folder size={14} className="shrink-0 text-amber-400" />}
             <span className="truncate flex-1">{node.name}</span>

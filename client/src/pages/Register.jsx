@@ -46,7 +46,7 @@ export default function Register() {
             <input className="input" type="email" value={form.email} onChange={set('email')} required autoComplete="email" />
           </Field>
           <Field label={t('auth.username')}>
-            <input className="input" value={form.username} onChange={set('username')} required minLength={3} maxLength={24} pattern="[a-zA-Z0-9_-]+" />
+            <input className="input" value={form.username} onChange={set('username')} required minLength={3} maxLength={24} pattern="[a-zA-Z0-9_\-]+" />
           </Field>
           <Field label={t('auth.password')} hint={t('auth.passwordHint')}>
             <input className="input" type="password" value={form.password} onChange={set('password')} required minLength={8} autoComplete="new-password" />

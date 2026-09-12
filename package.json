@@ -1,7 +1,7 @@
 {
   "name": "datapack-maker",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.2",
   "workspaces": [
     "server",
     "client"
@@ -11,9 +11,11 @@
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w client",
-    "start": "npm run start -w server"
+    "start": "node index.js --start",
+    "launch": "node index.js"
   },
   "devDependencies": {
     "concurrently": "^9.0.3"
-  }
+  },
+  "type": "module"
 }

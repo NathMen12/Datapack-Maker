@@ -21,12 +21,12 @@ export function Field({ label, hint, children }) {
 export function Modal({ title, onClose, children, wide = false }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop"
       style={{ background: 'rgba(0,0,0,.6)' }}
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="rounded-xl shadow-2xl w-full flex flex-col max-h-[85vh]"
+        className="rounded-xl shadow-2xl w-full flex flex-col max-h-[85vh] modal-panel"
         style={{ background: 'var(--panel)', border: '1px solid var(--border)', maxWidth: wide ? '640px' : '420px' }}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
@@ -64,7 +64,7 @@ export function ProgressBar({ percent, danger = false }) {
   return (
     <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--panel-2)' }}>
       <div
-        className="h-full rounded-full transition-all"
+        className="h-full rounded-full progress-anim"
         style={{ width: `${p}%`, background: p >= 100 ? 'var(--danger)' : p >= 80 ? 'var(--warn)' : 'var(--accent-2)' }}
       />
     </div>

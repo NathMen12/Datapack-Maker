@@ -22,7 +22,8 @@ function normLocal(p) {
 }
 
 function normCloud(p) {
-  return { ...p, isLocal: false };
+  /* rawId est indispensable : c'est lui qui sert dans tous les appels API. */
+  return { ...p, rawId: p.id, isLocal: false };
 }
 
 export const useProjects = create((set, get) => ({
@@ -49,6 +50,15 @@ export const useProjects = create((set, get) => ({
         projects = locals.map(normLocal);
       }
     } catch (e) {
+      /* Session perimee (compte supprime / base reinitialisee) :
+         deconnexion propre puis rechargement en mode local. */
+      if (e.status === 401) {
+        const { useAuth } = await import('./auth.js');
+        await useAuth.getState().logout().catch(() => {});
+        const locals = await localDB.listProjects().catch(() => []);
+        set({ projects: locals.map(normLocal), loading: false });
+        return;
+      }
       console.error('Chargement des projets', e);
     }
     set({ projects, loading: false });
@@ -89,6 +99,10 @@ export const useProjects = create((set, get) => ({
   getFiles: async (projectId) => {
     const p = get().projects.find((x) => x.id === projectId);
     if (!p) return [];
+    if (p.rawId === undefined || p.rawId === null) {
+      console.error('getFiles: projet sans rawId', p);
+      return [];
+    }
     if (p.isLocal) {
       return localDB.listFiles(p.rawId);
     }
@@ -99,6 +113,10 @@ export const useProjects = create((set, get) => ({
   saveFiles: async (projectId, saves, deletes) => {
     const p = get().projects.find((x) => x.id === projectId);
     if (!p) return;
+    if (p.rawId === undefined || p.rawId === null) {
+      console.error('saveFiles: projet sans rawId', p);
+      throw new Error('project_not_found');
+    }
     if (p.isLocal) {
       await localDB.saveFiles(p.rawId, saves, deletes);
       localDB.estimateSize().then((size) => set({ localSize: size }));

@@ -7,6 +7,7 @@
     "login": "Sign in",
     "register": "Create an account",
     "dashboard": "Dashboard",
+    "projects": "Projects",
     "logout": "Sign out",
     "language": "Language"
   },
@@ -50,9 +51,22 @@
     "storage": "Local storage",
     "migrate": "Save to my account",
     "migrated": "Project saved to your account",
-    "noProjects": "No projects yet. Create one from the studio."
+    "noProjects": "No projects yet. Create one from the studio.",
+    "manageProjects": "Manage my projects"
   },
   "projects": {
+  "projectsPage": {
+    "title": "My projects",
+    "subtitle": "All your projects, local and online, in one place.",
+    "search": "Search a project…",
+    "all": "All",
+    "local": "Local",
+    "cloud": "Online",
+    "open": "Open in studio",
+    "export": "Export",
+    "empty": "No project to display.",
+    "loading": "Loading…"
+  },
     "newProject": "New project",
     "name": "Project name",
     "namespace": "Namespace",

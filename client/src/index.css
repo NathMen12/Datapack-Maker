@@ -65,3 +65,101 @@ body {
 .input { background: var(--panel-2); border: 1px solid var(--border); border-radius: .5rem; padding: .5rem .75rem; color: var(--text); width: 100%; }
 .input:focus { outline: none; border-color: var(--accent-2); }
 .label { color: var(--muted); font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .35rem; display: block; }
+
+/* ============================================================
+   V1.0.2 — Animations & transitions fluides
+   ============================================================ */
+
+:root {
+  --anim-fast: 150ms;
+  --anim-mid: 280ms;
+  --anim-slow: 450ms;
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+/* ---------- Keyframes ---------- */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ---------- Classes d'animation ---------- */
+.anim-page { animation: fade-in var(--anim-slow) var(--ease-smooth); }
+.anim-fade-in { animation: fade-in var(--anim-mid) var(--ease-smooth); }
+.anim-rise { animation: rise-in var(--anim-slow) var(--ease-smooth) backwards; }
+.anim-scale-in { animation: scale-in var(--anim-mid) var(--ease-smooth); }
+.anim-slide-in { animation: slide-in-right var(--anim-mid) var(--ease-smooth); }
+.anim-saving { animation: pulse-soft 1.2s ease-in-out infinite; }
+
+/* ---------- Modals : entree douce ---------- */
+.modal-backdrop { animation: fade-in var(--anim-fast) ease-out; }
+.modal-panel { animation: scale-in var(--anim-mid) var(--ease-smooth); }
+
+/* ---------- Cartes projets : hover fluide ---------- */
+.project-card {
+  transition: transform var(--anim-mid) var(--ease-smooth),
+              box-shadow var(--anim-mid) var(--ease-smooth),
+              border-color var(--anim-mid) var(--ease-smooth);
+}
+.project-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-2) !important;
+  box-shadow: 0 10px 28px -10px rgba(34, 197, 94, 0.25);
+}
+
+/* ---------- Boutons : micro-interactions ---------- */
+.btn { transition: all var(--anim-fast) ease; }
+.btn:active { transform: scale(0.97); }
+.btn-primary:hover { box-shadow: 0 6px 18px -6px rgba(34, 197, 94, 0.5); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- Toasts : entree slide ---------- */
+.toast-anim { animation: slide-in-right var(--anim-mid) var(--ease-smooth); }
+
+/* ---------- Landing : hero + feature cards ---------- */
+.hero-anim { animation: rise-in var(--anim-slow) var(--ease-smooth); }
+.feature-card {
+  transition: transform var(--anim-mid) var(--ease-smooth),              border-color var(--anim-mid) var(--ease-smooth);
+}
+.feature-card:hover { transform: translateY(-4px); border-color: var(--accent-2) !important; }
+
+/* ---------- FileTree : lignes + chevrons ---------- */
+.tree-row { transition: background var(--anim-fast) ease, padding-left var(--anim-fast) ease; }
+.tree-row:hover { background: var(--panel-2); }
+.tree-chevron { transition: transform var(--anim-fast) var(--ease-smooth); }
+.tree-chevron-open { transform: rotate(90deg); }
+
+/* ---------- Barres de progression ---------- */
+.progress-anim { transition: width var(--anim-slow) var(--ease-smooth), background var(--anim-mid) ease; }
+
+/* ---------- Champ recherche ---------- */
+.input { transition: border-color var(--anim-fast) ease, box-shadow var(--anim-fast) ease; }
+.input:focus { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15); }
+
+/* ---------- Accessibility : respecter prefers-reduced-motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

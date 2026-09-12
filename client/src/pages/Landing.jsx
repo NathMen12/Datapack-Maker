@@ -29,6 +29,7 @@ export default function Landing() {
           <nav className="flex items-center gap-3">
             {user ? (
               <>
+                <Link to="/projects" className="btn btn-ghost">{t('app.projects')}</Link>
                 <Link to="/dashboard" className="btn btn-ghost">{t('app.dashboard')}</Link>
                 <Link to="/studio" className="btn btn-primary flex items-center gap-1">
                   {t('app.openStudio')} <ChevronRight size={16} />
@@ -46,7 +47,7 @@ export default function Landing() {
 
       {/* Hero */}
       <main className="flex-1">
-        <section className="max-w-6xl mx-auto px-6 pt-24 pb-16 text-center">
+        <section className="max-w-6xl mx-auto px-6 pt-24 pb-16 text-center hero-anim">
           <h1 className="text-5xl font-extrabold tracking-tight">{t('app.name')}</h1>
           <p className="mt-4 text-xl max-w-2xl mx-auto" style={{ color: 'var(--muted)' }}>
             {t('app.tagline')}
@@ -68,11 +69,11 @@ export default function Landing() {
         <section className="max-w-6xl mx-auto px-6 pb-24">
           <h2 className="text-2xl font-bold mb-8 text-center">{t('landing.features')}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map(({ icon: Icon, key }) => (
+            {FEATURES.map(({ icon: Icon, key }, idx) => (
               <div
                 key={key}
-                className="rounded-xl p-5"
-                style={{ background: 'var(--panel)', border: '1px solid var(--border)' }}
+                className="rounded-xl p-5 feature-card anim-rise"
+                style={{ background: 'var(--panel)', border: '1px solid var(--border)', animationDelay: `${Math.min(idx, 12) * 60}ms` }}
               >
                 <Icon size={26} className="mb-3 text-emerald-400" />
                 <h3 className="font-semibold mb-1">{t(`landing.${key}Title`)}</h3>

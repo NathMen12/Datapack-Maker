@@ -5,6 +5,7 @@ import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import Projects from './pages/Projects.jsx';
 import Studio from './pages/Studio.jsx';
 
 function RequireAuth({ children }) {
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/projects" element={<Projects />} />
         <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/studio" element={<Studio />} />
         <Route path="*" element={<Navigate to="/" replace />} />
