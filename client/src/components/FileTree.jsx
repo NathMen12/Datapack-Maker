@@ -9,6 +9,7 @@ export function buildTree(paths) {
     const parts = p.split('/').filter(Boolean);
     let node = root;
     parts.forEach((part, i) => {
+      if (part === ".keep") return; /* placeholder de dossier : ignore */
       const isFile = i === parts.length - 1;
       const path = parts.slice(0, i + 1).join('/');
       if (!node.children.has(part)) {
@@ -27,7 +28,7 @@ function sortChildren(children) {
   });
 }
 
-export default function FileTree({ files, activePath, onOpen, onNewFile, onNewFolder, onDelete, onRename }) {
+export default function FileTree({ files, activePath, onOpen, onNewFile, onNewFolder, onDelete, onRename, extraFolders = [] }) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(new Set());
   const [contextPath, setContextPath] = useState(null);
@@ -88,7 +89,9 @@ export default function FileTree({ files, activePath, onOpen, onNewFile, onNewFo
     });
   }
 
-  const tree = buildTree(files.map((f) => f.path));
+  /* Dossiers explicites fusionnes aux chemins de fichiers. */
+  const keep = "/.keep";
+  const tree = buildTree([...files.map((f) => f.path), ...extraFolders.map((p) => p + keep)]);
 
   return (
     <div className="flex flex-col h-full">

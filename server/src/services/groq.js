@@ -22,6 +22,16 @@ const SYSTEM_PROMPT = [
   'Reste court (une commande, rarement deux lignes).',
 ].join(' ');
 
+const GROQ_TIMEOUT_MS = 20_000;
+
+/* Abort apres 20 s : protege le serveur et le quota de l utilisateur. */
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(label)), ms)),
+  ]);
+}
+
 export async function completeMcfunction({ prefix, context, fileName }) {
   const groq = getClient();
   const userContent = `Fichier: ${fileName || 'function.mcfunction'}\n\nContexte du fichier (extrait):\n${(context || '').slice(-1500)}\n\nSuite a completer (le texte se termine exactement ici):\n${prefix}`;
@@ -39,7 +49,7 @@ export async function completeMcfunction({ prefix, context, fileName }) {
 
   let completion;
   try {
-    const res = await groq.chat.completions.create(params);
+    const res = await withTimeout(groq.chat.completions.create(params), GROQ_TIMEOUT_MS, "groq_timeout");
     completion = res.choices?.[0]?.message?.content || '';
     return { completion: completion.trim(), tokens: res.usage?.total_tokens || 0 };
   } catch (err) {
@@ -47,7 +57,7 @@ export async function completeMcfunction({ prefix, context, fileName }) {
     if (err?.status === 400 && params.reasoning_effort) {
       logger.alert('Groq a refuse reasoning_effort, nouvelle tentative sans le parametre');
       delete params.reasoning_effort;
-      const res = await groq.chat.completions.create(params);
+      const res = await withTimeout(groq.chat.completions.create(params), GROQ_TIMEOUT_MS, "groq_timeout");
       completion = res.choices?.[0]?.message?.content || '';
       return { completion: completion.trim(), tokens: res.usage?.total_tokens || 0 };
     }

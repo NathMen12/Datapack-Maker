@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { queries, db } from '../db/index.js';
 import { requireAuth } from '../middleware/auth.js';
+import { filePath, filesArray, isValidPngDataUri } from '../middleware/validate.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -11,7 +12,7 @@ const projectSchema = z.object({
   namespace: z.string().trim().regex(/^[a-z0-9_-]+$/, { message: 'namespace invalide' }),
   minecraftVersion: z.string().trim().min(1),
   description: z.string().max(500).optional().default(''),
-  files: z.array(z.object({ path: z.string(), content: z.string() })).optional(),
+  files: filesArray.optional(),
 });
 
 function projectRow(row) {
@@ -94,8 +95,8 @@ router.get('/:id/files', (req, res) => {
 });
 
 const saveFilesSchema = z.object({
-  saves: z.array(z.object({ path: z.string(), content: z.string() })).max(500),
-  deletes: z.array(z.string()).max(500),
+  saves: filesArray,
+  deletes: z.array(filePath).max(500),
 });
 
 router.put('/:id/files', (req, res) => {
@@ -118,12 +119,9 @@ router.put('/:id/files', (req, res) => {
 router.post('/:id/icon', (req, res) => {
   const project = ownProject(req, res);
   if (!project) return;
-  const icon = String(req.body?.icon || '');
-  if (icon && !/^data:image\/png;base64,/.test(icon)) {
+  const icon = typeof req.body?.icon === 'string' ? req.body.icon : '';
+  if (icon && !isValidPngDataUri(icon)) {
     return res.status(400).json({ error: 'invalid_icon' });
-  }
-  if (icon.length > 2 * 1024 * 1024) {
-    return res.status(413).json({ error: 'icon_too_large' });
   }
   queries.updateProject.run(project.name, project.namespace, project.description, icon, project.id, req.user.id);
   res.json({ ok: true });

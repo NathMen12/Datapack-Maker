@@ -1,9 +1,30 @@
-import { autocompletion } from '@codemirror/autocomplete';
+import { autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
+import {
+  lineNumbers,
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  highlightSpecialChars,
+  drawSelection,
+  dropCursor,
+  rectangularSelection,
+  crosshairCursor,
+  EditorView,
+  keymap,
+} from '@codemirror/view';
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from '@codemirror/commands';
+import { bracketMatching } from '@codemirror/language';
 import { mcCommands, mcSubCommands, mcSelectors, mcSelectorArgs } from './lang-mcfunction.js';
 
 /* ============================================================
-   Extensions de base de l'editeur mcfunction :
-   - autocompletion statique (data locale, sans IA)
+   Extensions de base de l'editeur mcfunction.
+   - editorBase() : gouttiere, curseur, selection, keymaps
+     (Enter saute des lignes, undo/redo Ctrl+Z/Y, historique)
+   - staticCompletion() : autocompletion statique locale
    ============================================================ */
 
 function toOptions(words, type, boost) {
@@ -50,10 +71,28 @@ function mcCompletionSource(context) {
   };
 }
 
+/* Base de l'editeur : gouttiere, curseur, selection, keymap complet. */
+export function editorBase() {
+  return [
+    history(),
+    closeBrackets(),
+    lineNumbers(),
+    highlightActiveLine(),
+    highlightActiveLineGutter(),
+    highlightSpecialChars(),
+    drawSelection(),
+    dropCursor(),
+    rectangularSelection(),
+    crosshairCursor(),
+    bracketMatching(),
+    EditorView.lineWrapping,
+    keymap.of([...defaultKeymap, ...historyKeymap, ...closeBracketsKeymap, indentWithTab]),
+  ];
+}
+
 export function staticCompletion() {
   return autocompletion({
-    override: [mcCompletionSource],
-    icons: false,
+    override: [mcCompletionSource],  icons: false,
     activateOnTyping: true,
     defaultKeymap: true,
   });

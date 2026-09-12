@@ -4,21 +4,22 @@ import { useTranslation } from 'react-i18next';
 import CodeMirror from '@uiw/react-codemirror';
 import {
   Braces, ChevronRight, Download, Home, Image as ImageIcon,
-  LogIn, Package, Palette, Plus, Settings as SettingsIcon, Sparkles, Upload, AlertTriangle,
+  LogIn, Palette, Plus, Settings as SettingsIcon, Sparkles, Upload, AlertTriangle, Trash2, File, X,
 } from 'lucide-react';
 import { useAuth } from '../stores/auth.js';
 import { useProjects } from '../stores/projects.js';
 import { useSettings } from '../stores/settings.js';
 import { api } from '../api/client.js';
 import { mcfunction } from '../editor/lang-mcfunction.js';
-import { staticCompletion } from '../editor/setup.js';
+import { staticCompletion, editorBase } from '../editor/setup.js';
 import { mcHighlight } from '../editor/highlight.js';
 import { makeAIVoiceExtension, fileName } from '../editor/ai-ghost.js';
 import FileTree from '../components/FileTree.jsx';
 import NewProjectModal from '../components/NewProjectModal.jsx';
 import SettingsModal from '../components/SettingsModal.jsx';
 import ColorToolModal from '../components/ColorToolModal.jsx';
-import { Button } from '../components/ui.jsx';
+import NameModal from '../components/NameModal.jsx';
+import { Button, Modal } from '../components/ui.jsx';
 import { exportToZip, importFromZip } from '../lib/zip.js';
 import { getMCVersionInfo } from '../lib/datapack.js';
 
@@ -37,6 +38,10 @@ export default function Studio() {
   const [quota, setQuota] = useState(null);
   const [toast, setToast] = useState(null); /* { kind: 'error'|'ok', text } */
   const [modal, setModal] = useState(null);
+  const [nameModal, setNameModal] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [extraFolders, setExtraFolders] = useState(new Set()); /* dossiers crees sans fichier */
+  const [openTabs, setOpenTabs] = useState([]);
   const iconInputRef = useRef(null);
   const zipInputRef = useRef(null);
   const filesRef = useRef([]);
@@ -66,7 +71,7 @@ export default function Studio() {
       const list = await getFiles(p.id);
       setFiles(list);
       const first = list.find((f) => f.path.endsWith('.mcfunction')) || list[0];
-      if (first) { setActivePath(first.path); setContent(first.content); }
+      if (first) { openTab(first.path, first.content); }
       else { setActivePath(''); setContent(''); }
       if (user) api.aiQuota().then((d) => setQuota(d.percentUsed)).catch(() => {});
     } catch (e) {
@@ -93,7 +98,35 @@ export default function Studio() {
 
   function onEditorChange(value) {
     setContent(value);
+    updateTabContent(activePath, value);
     if (activePath) scheduleSave(activePath, value);
+  }
+  /* ---------- Onglets multi-fichiers ---------- */
+  function openTab(path, content) {
+    setActivePath(path);
+    setContent(content);
+    setOpenTabs((tabs) => (tabs.some((x) => x.path === path) ? tabs : [...tabs, { path, content }]));
+  }
+
+  function closeTab(path) {
+    const next = openTabs.filter((x) => x.path !== path);
+    if (activePath === path) {
+      const last = next[next.length - 1];
+      if (last) { setActivePath(last.path); setContent(last.content); }
+      else { setActivePath(""); setContent(""); }
+    }
+    setOpenTabs(next);
+  }
+
+  function selectTab(path) {
+    const tab = openTabs.find((x) => x.path === path);
+    if (!tab) return;
+    setActivePath(path);
+    setContent(tab.content);
+  }
+
+  function updateTabContent(path, value) {
+    setOpenTabs((tabs) => tabs.map((x) => (x.path === path ? { ...x, content: value } : x)));
   }
 
   /* ---------- IA ---------- */
@@ -120,51 +153,72 @@ export default function Studio() {
     return `data/${activeProject?.namespace || 'custom'}/${folder}`;
   }
 
-  async function promptNewFile(isFolder = false) {
-    const input = window.prompt(
-      isFolder ? t('studio.newFolder') : t('studio.newFile'),
-      isFolder ? `${defaultDir()}/` : `${defaultDir()}/new_function.mcfunction`
-    );
-    if (!input) return;
-    let path = input.trim().replace(/^\/+/, '');
-    if (!isFolder && !/\.(mcfunction|json)$/.test(path)) path += '.mcfunction';
-    if (!path || path.endsWith('/')) return;
+  /* Ouvre la modal de nommage. */
+  function openNameModal(mode, oldPath) {
+    setNameModal({ mode, oldPath: oldPath || null, defaultFolder: defaultDir() });
+  }
+
+  function listFolders() {
+    const dirs = new Set();
+    for (const f of filesRef.current) {
+      const parts = f.path.split("/");
+      for (let i = 1; i < parts.length; i++) dirs.add(parts.slice(0, i).join("/"));
+    }
+    return [...dirs].sort();
+  }
+
+  async function submitNameModal(arg) {
+    const name = arg.name; const folder = arg.folder; const mode = arg.mode; const oldPath = arg.oldPath;
+    let path = folder ? folder + "/" + name : name;
+    if (mode === "newFile" && !/\.(mcfunction|json)$/.test(path)) path += ".mcfunction";
+    if (mode === "renameFile" && !/\.(mcfunction|json)$/.test(path)) {
+      const ext = (String(oldPath).match(/\.(mcfunction|json)$/) || [])[0] || ".mcfunction";
+      path += ext;
+    }
     try {
-      await saveFiles(activeProject.id, [{ path, content: '' }], []);
-      setFiles((fs) => [...fs.filter((f) => f.path !== path), { path, content: '' }]);
-      if (!isFolder) { setActivePath(path); setContent(''); }
+      if (mode === "renameFile") {
+        const file = filesRef.current.find((f) => f.path === oldPath);
+        await saveFiles(activeProject.id, [{ path, content: file ? file.content : "" }], [oldPath]);
+        setFiles((fs) => fs.map((f) => (f.path === oldPath ? { ...f, path } : f)));
+        if (activePath === oldPath) setActivePath(path);
+      } else if (mode === "newFolder") {
+        setExtraFolders((set) => new Set([...set, path]));
+        showToast("ok", t("studio.folderCreated"));
+      } else {
+        await saveFiles(activeProject.id, [{ path, content: "" }], []);
+        setFiles((fs) => [...fs.filter((f) => f.path !== path), { path, content: "" }]);
+        setActivePath(path);
+        setContent("");
+      }
     } catch (e) {
-      showToast('error', t('studio.storageError', { message: e.message }));
+      showToast("error", t("studio.storageError", { message: e.message }));
     }
   }
 
-  async function deleteFile(path) {
-    if (!window.confirm(`${t('studio.deleteFile')} : ${path} ?`)) return;
+
+  function deleteFile(path) {
+    setConfirmDelete(path);
+  }
+
+  /* Suppression reelle, appelee par la modal de confirmation. */
+  async function confirmDeleteFile() {
+    const path = confirmDelete;
+    setConfirmDelete(null);
     try {
       await saveFiles(activeProject.id, [], [path]);
       const remaining = filesRef.current.filter((f) => f.path !== path);
       setFiles(remaining);
       if (activePath === path) {
         if (remaining.length) { setActivePath(remaining[0].path); setContent(remaining[0].content); }
-        else { setActivePath(''); setContent(''); }
+        else { setActivePath(""); setContent(""); }
       }
     } catch (e) {
-      showToast('error', t('studio.storageError', { message: e.message }));
+      showToast("error", t("studio.storageError", { message: e.message }));
     }
   }
 
-  async function renameFile(oldPath) {
-    const newPath = window.prompt(t('studio.renameFile'), oldPath);
-    if (!newPath || newPath === oldPath) return;
-    const file = filesRef.current.find((f) => f.path === oldPath);
-    if (!file) return;
-    try {
-      await saveFiles(activeProject.id, [{ path: newPath, content: file.content }], [oldPath]);
-      setFiles((fs) => fs.map((f) => (f.path === oldPath ? { path: newPath, content: f.content } : f)));
-      if (activePath === oldPath) setActivePath(newPath);
-    } catch (e) {
-      showToast('error', t('studio.storageError', { message: e.message }));
-    }
+  function renameFile(oldPath) {
+    openNameModal('renameFile', oldPath);
   }
 
   /* ---------- Import / Export ---------- */
@@ -247,6 +301,7 @@ export default function Studio() {
   const editorExtensions = useMemo(() => [
     mcfunction(),
     mcHighlight(),
+    editorBase(),
     staticCompletion(),
     makeAIVoiceExtension({
       fetchCompletion: fetchAI,
@@ -289,40 +344,17 @@ export default function Studio() {
       </header>
 
       <div className="flex flex-1 min-h-0">
-        {/* Sidebar projets */}
-        <aside className="w-56 border-r flex flex-col shrink-0 hidden md:flex" style={{ borderColor: 'var(--border)', background: 'var(--panel)' }}>
-          <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
-            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Projets</span>
-            <button className="btn btn-primary !py-0.5 !px-1.5 flex items-center gap-1 text-xs" onClick={() => setModal('newProject')}>
-              <Plus size={12} /> {t('projects.newProject')}
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {projects.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => openProject(p)}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--panel-2)] flex items-center gap-2"
-                style={{ background: activeProject?.id === p.id ? 'var(--panel-2)' : undefined }}
-              >
-                <Package size={14} className="text-emerald-400 shrink-0" />
-                <span className="truncate flex-1">{p.name}</span>
-              </button>
-            ))}
-            {projects.length === 0 && (
-              <p className="text-xs px-3 py-3" style={{ color: 'var(--muted)' }}>{t('dashboard.noProjects')}</p>
-            )}
-          </div>
-        </aside>
+        {/* La liste des projets vit dans la page Projets dediee. */}
 
         {/* Arborescence fichiers */}
         <aside className="w-60 border-r shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--panel)' }}>
           <FileTree
             files={files}
+            extraFolders={[...extraFolders]}
             activePath={activePath}
-            onOpen={(p) => { setActivePath(p); setContent(filesRef.current.find((f) => f.path === p)?.content || ''); }}
-            onNewFile={() => promptNewFile(false)}
-            onNewFolder={() => promptNewFile(true)}
+            onOpen={(p) => { if (p.endsWith('.keep')) return; const f = filesRef.current.find((x) => x.path === p); openTab(p, f ? f.content : ''); }}
+            onNewFile={() => openNameModal("newFile")}
+            onNewFolder={() => openNameModal("newFolder")}
             onDelete={deleteFile}
             onRename={renameFile}
           />
@@ -330,16 +362,38 @@ export default function Studio() {
 
         {/* Editeur */}
         <main className="flex-1 min-w-0 flex flex-col">
-          {activePath ? (
+          {activePath || openTabs.length ? (
             <>
-              <div className="h-9 flex items-center gap-2 px-4 border-b text-xs" style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}>
-                <ImageIcon size={12} />
+              {/* Barre d onglets multi-fichiers */}
+              <div className="tabs-bar flex items-stretch overflow-x-auto border-b shrink-0" style={{ borderColor: "var(--border)", background: "var(--panel)" }}>
+                {openTabs.map((tab) => (
+                  <div
+                    key={tab.path}
+                    className={"tab-item flex items-center gap-1.5 px-3 h-9 text-xs cursor-pointer shrink-0 border-r " + (activePath === tab.path ? "tab-active" : "")}
+                    style={{ borderColor: "var(--border)", background: activePath === tab.path ? "var(--panel-2)" : undefined }}
+                    onClick={() => selectTab(tab.path)}
+                    title={tab.path}
+                  >
+                    <File size={13} className="shrink-0" style={{ color: activePath === tab.path ? "var(--accent-2)" : "var(--muted)" }} />
+                    <span className="truncate max-w-[180px]">{tab.path.split("/").pop()}</span>
+                    <button
+                      className="ml-1 p-0.5 rounded hover:bg-[var(--border)] flex items-center"
+                      onClick={(e) => { e.stopPropagation(); closeTab(tab.path); }}
+                      title="Close"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {/* Barre de statut du fichier actif */}
+              <div className="h-9 flex items-center gap-2 px-4 border-b text-xs" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
                 <span className="font-mono">{activePath}</span>
                 {user && settings.autocompleteEnabled && (
-                  <span className="ml-auto flex items-center gap-1"><Sparkles size={11} className="text-emerald-400" /> {t('editor.aiHint')} — Tab</span>
+                  <span className="ml-auto flex items-center gap-1"><Sparkles size={11} className="text-emerald-400" /> {t("editor.aiHint")} — Tab</span>
                 )}
-                {!user && <span className="ml-auto">{t('studio.connectForAI')}</span>}
-                {user && !settings.autocompleteEnabled && <span className="ml-auto">{t('studio.aiDisabled')}</span>}
+                {!user && <span className="ml-auto">{t("studio.connectForAI")}</span>}
+                {user && !settings.autocompleteEnabled && <span className="ml-auto">{t("studio.aiDisabled")}</span>}
               </div>
               <div className="flex-1 min-h-0 overflow-hidden">
                 <CodeMirror
@@ -386,6 +440,32 @@ export default function Studio() {
       {modal === 'newProject' && <NewProjectModal onClose={() => setModal(null)} onCreate={handleCreateProject} />}
       {modal === 'settings' && <SettingsModal onClose={() => setModal(null)} />}
       {modal === 'color' && <ColorToolModal onClose={() => setModal(null)} />}
+      {nameModal && (
+        <NameModal
+          mode={nameModal.mode}
+          oldPath={nameModal.oldPath || ''}
+          defaultFolder={nameModal.defaultFolder}
+          folders={{
+            list: listFolders(),
+            existingPaths: new Set(filesRef.current.map((f) => f.path)),
+          }}
+          onClose={() => setNameModal(null)}
+          onSubmit={submitNameModal}
+        />
+      )}
+      {confirmDelete && (
+        <Modal title={t("studio.deleteFile")} onClose={() => setConfirmDelete(null)}>
+          <div className="flex flex-col items-center gap-4">
+            <Trash2 size={40} className="text-red-400" />
+            <p className="text-sm text-center">{t("studio.deleteFileConfirm")}</p>
+            <p className="text-xs font-mono" style={{ color: "var(--muted)" }}>{confirmDelete}</p>
+            <div className="flex gap-2">
+              <Button onClick={() => setConfirmDelete(null)}>{t("projects.cancel")}</Button>
+              <Button variant="danger" onClick={confirmDeleteFile}>{t("projects.delete")}</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

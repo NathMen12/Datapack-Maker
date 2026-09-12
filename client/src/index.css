@@ -77,7 +77,7 @@ body {
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html { scroll-behavior: smooth; }
 
 /* ---------- Keyframes ---------- */
 @keyframes fade-in {
@@ -163,3 +163,70 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   V1.0.3 - Curseur editeur tres visible + selection claire
+   ============================================================ */
+.cm-cursor, .cm-dropCursor {
+  border-left: 2.5px solid var(--accent) !important;
+  border-radius: 1px;
+}
+.cm-focused .cm-cursor { animation: caret-blink 1.1s steps(1) infinite; }
+@keyframes caret-blink { 50% { opacity: 0; } }
+.cm-selectionBackground, .cm-content ::selection {
+  background: rgba(74, 222, 128, 0.25) !important;
+}
+.cm-lineNumbers .cm-gutterElement {
+  color: #4a5568;
+  padding: 0 8px 0 4px;
+  min-width: 2.2em;
+  font-size: 12.5px;
+  transition: color var(--anim-fast) ease;
+}
+.cm-lineNumbers .cm-gutterElement.cm-activeLineGutter {
+  color: var(--accent);
+  font-weight: 600;
+}
+.cm-activeLine { background: rgba(74, 222, 128, 0.05); }
+.cm-gutters {
+  border-right: 1px solid var(--border) !important;
+  background: var(--panel) !important;
+}
+
+/* ============================================================
+   V1.0.4 — Barre d'onglets multi-fichiers (style IDE)
+   ============================================================ */
+
+.tabs-bar {
+  min-height: 36px;
+  scrollbar-width: none;
+}
+.tabs-bar::-webkit-scrollbar { display: none; }
+
+.tab-item {
+  color: var(--muted);
+  transition: background var(--anim-fast) ease, color var(--anim-fast) ease;
+  border-top: 2px solid transparent;
+  position: relative;
+}
+.tab-item:hover { color: var(--text); background: var(--panel-2) !important; }
+
+.tab-item.tab-active {
+  color: var(--text);
+  border-top: 2px solid var(--accent-2);
+  background: var(--panel-2) !important;
+  font-weight: 600;
+}
+
+.tab-item .tab-close {
+  opacity: 0;
+  transition: opacity var(--anim-fast) ease;
+}
+.tab-item:hover .tab-close { opacity: 1; }
+.tab-item.tab-active .tab-close { opacity: 1; }
+
+/* Icone de fichier dans l onglet */
+.tab-item svg { flex-shrink: 0; }
+
+/* Middle-click pour fermer l onglet */
+.tab-item { user-select: none; }

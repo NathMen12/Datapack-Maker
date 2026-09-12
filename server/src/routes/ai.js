@@ -58,8 +58,13 @@ router.post('/complete', requireAuth, completeLimiter, async (req, res) => {
     logger.info(`Completion IA (${tokens} tokens) pour l'utilisateur #${req.user.id}`);
     res.json({ completion, percentUsed: newPercent });
   } catch (err) {
+    /* Message interne journalise, jamais renvoye au client. */
+    if (err.status === 503) {
+      logger.alert('IA indisponible (cle absente ou modele en panne)');
+      return res.status(503).json({ error: 'ai_unavailable' });
+    }
     logger.error('Erreur Groq:', err.message);
-    res.status(err.status || 500).json({ error: 'ai_error', message: err.message });
+    res.status(502).json({ error: 'ai_error' });
   }
 });
 

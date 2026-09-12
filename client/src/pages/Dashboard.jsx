@@ -6,6 +6,7 @@ import { useAuth } from '../stores/auth.js';
 import { useProjects } from '../stores/projects.js';
 import { api } from '../api/client.js';
 import { Badge, Button, ProgressBar } from '../components/ui.jsx';
+import ConfirmModal from '../components/ConfirmModal.jsx';
 
 function fmtSize(bytes) {
   if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [quota, setQuota] = useState(null);
   const [localSize, setLocalSize] = useState(0);
   const [busy, setBusy] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
     load();
@@ -42,9 +44,15 @@ export default function Dashboard() {
     }
   }
 
-  async function onDelete(p) {
-    if (!window.confirm(t('projects.deleteConfirm', { name: p.name }))) return;
-    await remove(p.id);
+  /* Ouvre la modal ; la suppression reelle attend la confirmation. */
+  function askDelete(p) {
+    setConfirmDelete(p);
+  }
+
+  async function confirmDeleteProject() {
+    const p = confirmDelete;
+    setConfirmDelete(null);
+    try { await remove(p.id); } catch (e) { console.error(e); }
   }
 
   return (
@@ -137,13 +145,22 @@ export default function Dashboard() {
                       <CloudUpload size={14} />
                     </Button>
                   )}
-                  <Button variant="danger" className="!py-1.5 text-sm" onClick={() => onDelete(p)}>{t('projects.delete')}</Button>
+                  <Button variant="danger" className="!py-1.5 text-sm" onClick={() => askDelete(p)}>{t('projects.delete')}</Button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </main>
+      {confirmDelete && (
+        <ConfirmModal
+          title={t("projects.delete")}
+          message={t("projects.deleteConfirm", { name: confirmDelete.name })}
+          detail={confirmDelete.name}
+          onConfirm={confirmDeleteProject}
+          onClose={() => setConfirmDelete(null)}
+        />
+      )}
     </div>
   );
 }

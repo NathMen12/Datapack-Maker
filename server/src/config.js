@@ -26,16 +26,31 @@ function loadEnvFile() {
 
 const env = { ...loadEnvFile(), ...process.env };
 
+const isProd = (env.NODE_ENV || 'development') === 'production';
+
+/* Origines autorisees (separees par des virgules si plusieurs). */
+const clientOrigins = (env.CLIENT_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+/* Quota IA : doit etre un nombre fini positif, sinon le blocage de quota
+   ne fonctionne plus (division par NaN jamais >= 100). */
+const rawQuota = Number(env.AI_QUOTA_TOKENS || 5000);
+const aiQuotaTokens = Number.isFinite(rawQuota) && rawQuota > 0 ? Math.floor(rawQuota) : 5000;
+
 export const config = {
   env: env.NODE_ENV || 'development',
+  isProd,
   port: Number(env.PORT || 3000),
-  clientOrigin: env.CLIENT_ORIGIN || 'http://localhost:5173',
+  clientOrigins,
   jwtSecret: env.JWT_SECRET || 'dev-secret-do-not-use-in-prod',
+  jwtSecretProvided: Boolean(env.JWT_SECRET),
   dbPath: path.join(SERVER_ROOT, env.DB_PATH || 'data/app.db'),
   logsDir: path.join(SERVER_ROOT, 'logs'),
   groqApiKey: env.GROQ_API_KEY || '',
   aiModel: env.AI_MODEL || 'openai/gpt-oss-120b',
-  aiQuotaTokens: Number(env.AI_QUOTA_TOKENS || 5000),
+  aiQuotaTokens,
 };
 
 export { SERVER_ROOT };

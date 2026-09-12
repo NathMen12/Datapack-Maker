@@ -36,9 +36,17 @@ function logFileLine(line) {
   }
 }
 
+/* Vie privee : masque les adresses email dans tout message journalise. */
+function maskEmails(msg) {
+  return msg.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, (m) => {
+    const at = m.indexOf('@');
+    return m[0] + '***' + m.slice(at);
+  });
+}
+
 function emit(level, args) {
   const conf = LEVELS[level];
-  const msg = args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+  const msg = maskEmails(args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' '));
   const prefix = `${COLORS.dim}[${timestamp()}]${COLORS.reset} ${conf.color}${COLORS.bold}[${conf.label}]${COLORS.reset} `;
   const plain = `[${timestamp()}] [${conf.label}] ${msg}`;
   process.stdout.write(prefix + conf.color + msg + COLORS.reset + '\n');

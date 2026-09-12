@@ -61,12 +61,24 @@ export async function importFromZip(file) {
     if (m) { namespace = m[1]; break; }
   }
 
+  /* Securite : n accepter que des chemins relatifs internes au projet.
+     Un ZIP malveillant peut contenir "../evil" (zip-slip a l export). */
+  const isSafePath = (p) =>
+    typeof p === 'string' &&
+    p.length <= 255 &&
+    !p.includes('..') &&
+    !p.startsWith('/') &&
+    !p.includes('\\') &&
+    !p.includes('//') &&
+    /^[a-zA-Z0-9_\-./]+$/.test(p);
+
   const skip = new Set(['pack.mcmeta', 'pack.png']);
   const files = [];
   for (const f of entries) {
     const path = strip(f.name);
     if (skip.has(path)) continue;
-    if (/\.(mcfunction|json|mcmeta)$/.test(path)) {
+    if (!isSafePath(path)) continue; /* entree dangereuse ou exotique : ignoree */
+    if (/\.(mcfunction|json|mcmeta)$/.test(path) && files.length < 500) {
       files.push({ path, content: await f.async('string') });
     }
   }

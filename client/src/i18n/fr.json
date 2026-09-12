@@ -39,7 +39,8 @@
     "haveAccount": "Déjà un compte ?",
     "invalidCredentials": "E-mail ou mot de passe incorrect.",
     "emailTaken": "Cette adresse e-mail est déjà utilisée.",
-    "invalidInput": "Vérifiez les champs saisis."
+    "invalidInput": "Vérifiez les champs saisis.",
+    "register": "Créer un compte"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -55,18 +56,6 @@
     "manageProjects": "Gérer mes projets"
   },
   "projects": {
-  "projectsPage": {
-    "title": "Mes projets",
-    "subtitle": "Retrouvez ici tous vos projets, locaux et en ligne.",
-    "search": "Rechercher un projet…",
-    "all": "Tous",
-    "local": "Locaux",
-    "cloud": "En ligne",
-    "open": "Ouvrir dans le studio",
-    "export": "Exporter",
-    "empty": "Aucun projet à afficher.",
-    "loading": "Chargement…"
-  },
     "newProject": "Nouveau projet",
     "name": "Nom du projet",
     "namespace": "Namespace",
@@ -123,6 +112,16 @@
     "exportDone": "Export ZIP généré",
     "iconUpdated": "Icône du projet mise à jour",
     "noFiles": "Aucun fichier. Créez-en un.",
+    "folderName": "Nom du dossier",
+    "fileName": "Nom du fichier",
+    "parentFolder": "Dossier parent",
+    "rootFolder": "— Racine du projet —",
+    "resultingPath": "Chemin résultant",
+    "pathAlreadyExists": "Ce chemin existe déjà.",
+    "nameFolderHint": "Lettres, chiffres, - et _ (le dossier est créé implicitement à l'usage)",
+    "nameFileHint": "Lettres, chiffres, - et _ ; l'extension .mcfunction est ajoutée automatiquement",
+    "folderCreated": "Dossier prêt : créez-y un fichier pour le materialiser",
+    "deleteFileConfirm": "Supprimer définitivement ce fichier ?",
     "selectFile": "Sélectionner un fichier ZIP"
   },
   "editor": {
@@ -141,5 +140,17 @@
     "light": "Clair",
     "close": "Fermer",
     "saved": "Paramètres enregistrés"
+  },
+  "projectsPage": {
+    "title": "Mes projets",
+    "subtitle": "Retrouvez ici tous vos projets, locaux et en ligne.",
+    "search": "Rechercher un projet…",
+    "all": "Tous",
+    "local": "Locaux",
+    "cloud": "En ligne",
+    "open": "Ouvrir dans le studio",
+    "export": "Exporter",
+    "empty": "Aucun projet à afficher.",
+    "loading": "Chargement…"
   }
 }

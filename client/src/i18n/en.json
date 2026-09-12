@@ -39,7 +39,8 @@
     "haveAccount": "Already have an account?",
     "invalidCredentials": "Incorrect email or password.",
     "emailTaken": "This email address is already used.",
-    "invalidInput": "Please check the fields."
+    "invalidInput": "Please check the fields.",
+    "register": "Create an account"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -55,18 +56,6 @@
     "manageProjects": "Manage my projects"
   },
   "projects": {
-  "projectsPage": {
-    "title": "My projects",
-    "subtitle": "All your projects, local and online, in one place.",
-    "search": "Search a project…",
-    "all": "All",
-    "local": "Local",
-    "cloud": "Online",
-    "open": "Open in studio",
-    "export": "Export",
-    "empty": "No project to display.",
-    "loading": "Loading…"
-  },
     "newProject": "New project",
     "name": "Project name",
     "namespace": "Namespace",
@@ -123,6 +112,16 @@
     "exportDone": "ZIP export generated",
     "iconUpdated": "Project icon updated",
     "noFiles": "No files yet. Create one.",
+    "folderName": "Folder name",
+    "fileName": "File name",
+    "parentFolder": "Parent folder",
+    "rootFolder": "— Project root —",
+    "resultingPath": "Resulting path",
+    "pathAlreadyExists": "This path already exists.",
+    "nameFolderHint": "Letters, digits, - and _ (the folder is created implicitly on use)",
+    "nameFileHint": "Letters, digits, - and _ ; the .mcfunction extension is added automatically",
+    "folderCreated": "Folder ready: create a file inside to materialize it",
+    "deleteFileConfirm": "Permanently delete this file?",
     "selectFile": "Select a ZIP file"
   },
   "editor": {
@@ -141,5 +140,17 @@
     "light": "Light",
     "close": "Close",
     "saved": "Settings saved"
+  },
+  "projectsPage": {
+    "title": "My projects",
+    "subtitle": "All your projects, local and online, in one place.",
+    "search": "Search a project…",
+    "all": "All",
+    "local": "Local",
+    "cloud": "Online",
+    "open": "Open in studio",
+    "export": "Export",
+    "empty": "No project to display.",
+    "loading": "Loading…"
   }
 }

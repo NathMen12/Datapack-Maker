@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../stores/auth.js';
 import { useProjects } from '../stores/projects.js';
 import { Badge, Button, ProgressBar, Spinner } from '../components/ui.jsx';
+import ConfirmModal from '../components/ConfirmModal.jsx';
 import { exportToZip } from '../lib/zip.js';
 
 /* ============ Page Projets dediee (/projects) ============ */
@@ -21,6 +22,7 @@ export default function Projects() {
   const [filter, setFilter] = useState('all');
   const [busy, setBusy] = useState('');
   const [quota, setQuota] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
     load();
@@ -38,10 +40,16 @@ export default function Projects() {
     finally { setBusy(''); }
   }
 
-  async function onDelete(p) {
-    if (!window.confirm(t('projects.deleteConfirm', { name: p.name }))) return;
-    setBusy(p.id);
-    try { await remove(p.id); } catch (e) { console.error(e); }
+  /* Ouvre la modal ; la suppression reelle attend la confirmation. */
+  function askDelete(p) {
+    setConfirmDelete(p);
+  }
+
+  async function confirmDeleteProject() {
+    const proj = confirmDelete;
+    setConfirmDelete(null);
+    setBusy(proj.id);
+    try { await remove(proj.id); } catch (e) { console.error(e); }
     finally { setBusy(''); }
   }
 
@@ -171,13 +179,22 @@ n                key={p.id}
                     <Button className="!py-1.5 text-sm" onClick={() => onMigrate(p)} disabled={busy === p.id} title={t('dashboard.migrate')}><CloudUpload size={14} /></Button>
                   )}
                   <Button className="!py-1.5 text-sm" onClick={() => onExport(p)} disabled={busy === p.id} title={t('studio.exportZip')}><Download size={14} /></Button>
-                  <Button variant="danger" className="!py-1.5 text-sm" onClick={() => onDelete(p)}><Trash2 size={14} /></Button>
+                  <Button variant="danger" className="!py-1.5 text-sm" onClick={() => askDelete(p)}><Trash2 size={14} /></Button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </main>
+      {confirmDelete && (
+        <ConfirmModal
+          title={t("projects.delete")}
+          message={t("projects.deleteConfirm", { name: confirmDelete.name })}
+          detail={confirmDelete.name}
+          onConfirm={confirmDeleteProject}
+          onClose={() => setConfirmDelete(null)}
+        />
+      )}
     </div>
   );
 }
