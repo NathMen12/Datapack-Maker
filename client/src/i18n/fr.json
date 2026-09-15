@@ -75,7 +75,8 @@
     "updatedAt": "Modifié le {{date}}",
     "nameRequired": "Le nom est obligatoire.",
     "invalidNamespace": "Namespace invalide (minuscules, chiffres, - et _).",
-    "open": "Ouvrir"
+    "open": "Ouvrir",
+    "settings": "Parametres"
   },
   "studio": {
     "files": "Fichiers",
@@ -107,6 +108,12 @@
     "aiDisabled": "Autocomplétion désactivée dans les paramètres",
     "storageFull": "Stockage du navigateur plein ! Exportez ou supprimez des projets pour libérer de l'espace.",
     "storageError": "Erreur de stockage local : {{message}}",
+    "fsLinkTitle": "Lier à un dossier du PC (sauvegarde directe sur le disque)",
+    "fsLinkedTitle": "Dossier lié — cliquer pour détacher, clic droit pour resynchroniser",
+    "fsLinked": "Dossier lié : les fichiers sont écrits directement sur le disque",
+    "fsUnlinked": "Liaison au dossier supprimée",
+    "fsUnsupported": "Votre navigateur ne supporte pas la liaison de dossier (Chrome, Edge ou Opera requis)",
+    "fsDenied": "Accès au dossier refusé",
     "importSuccess": "Datapack importé avec succès",
     "importInvalid": "ZIP invalide : pack.mcmeta introuvable à la racine.",
     "exportDone": "Export ZIP généré",
@@ -152,5 +159,35 @@
     "export": "Exporter",
     "empty": "Aucun projet à afficher.",
     "loading": "Chargement…"
+  },
+  "projectSettings": {
+    "title": "Paramètres du projet",
+    "subtitle": "Nom, namespace, version de Minecraft et icône du datapack.",
+    "back": "Retour aux projets",
+    "general": "Informations générales",
+    "name": "Nom du projet",
+    "namespace": "Namespace",
+    "namespaceHint": "Lettres minuscules, chiffres, tirets et underscores uniquement",
+    "version": "Version de Minecraft",
+    "description": "Description",
+    "icon": "Icône du projet",
+    "iconHint": "PNG carré, 128×128 recommandé (max 512 Ko)",
+    "chooseIcon": "Choisir un PNG",
+    "removeIcon": "Retirer l'icône",
+    "iconTooBig": "Image trop lourde (maximum 512 Ko).",
+    "details": "Détails",
+    "badge": "Type de stockage",
+    "files": "Fichiers",
+    "created": "Créé le",
+    "updated": "Modifié le",
+    "actions": "Actions",
+    "actionsHint": "Ouvrir le projet dans le studio ou générer une archive ZIP prête à installer.",
+    "exporting": "Export en cours…",
+    "dangerZone": "Zone dangereuse",
+    "dangerHint": "La suppression est définitive et efface aussi tous les fichiers du projet.",
+    "save": "Enregistrer les modifications",
+    "saved": "Projet enregistré",
+    "error": "Erreur lors de la sauvegarde",
+    "noProject": "Projet introuvable"
   }
 }

@@ -59,7 +59,7 @@ export const queries = {
   listProjects: db.prepare('SELECT id, name, namespace, minecraft_version, description, icon != \'\' AS has_icon, created_at, updated_at FROM projects WHERE user_id = ? ORDER BY updated_at DESC'),
   getProject: db.prepare('SELECT * FROM projects WHERE id = ? AND user_id = ?'),
   insertProject: db.prepare('INSERT INTO projects (user_id, name, namespace, minecraft_version, description, icon) VALUES (?, ?, ?, ?, ?, ?)'),
-  updateProject: db.prepare('UPDATE projects SET name = ?, namespace = ?, description = ?, icon = ?, updated_at = datetime(\'now\') WHERE id = ? AND user_id = ?'),
+  updateProject: db.prepare('UPDATE projects SET name = ?, namespace = ?, minecraft_version = ?, description = ?, icon = ?, updated_at = datetime(\'now\') WHERE id = ? AND user_id = ?'),
   touchProject: db.prepare('UPDATE projects SET updated_at = datetime(\'now\') WHERE id = ?'),
   deleteProject: db.prepare('DELETE FROM projects WHERE id = ? AND user_id = ?'),
   listFiles: db.prepare('SELECT path, content FROM files WHERE project_id = ? ORDER BY path'),

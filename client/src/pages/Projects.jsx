@@ -3,12 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Braces, ChevronRight, CloudUpload, FolderKanban, HardDrive, Home, LogOut,
-  Package, PenTool, Plus, Search, Sparkles, Trash2, Download,
+  Package, PenTool, Plus, Search, Sparkles, Trash2, Download, Settings,
 } from 'lucide-react';
 import { useAuth } from '../stores/auth.js';
 import { useProjects } from '../stores/projects.js';
 import { Badge, Button, ProgressBar, Spinner } from '../components/ui.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
+import NewProjectModal from '../components/NewProjectModal.jsx';
 import { exportToZip } from '../lib/zip.js';
 
 /* ============ Page Projets dediee (/projects) ============ */
@@ -17,12 +18,13 @@ export default function Projects() {
   const navigate = useNavigate();
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
-  const { projects, loading, load, remove, migrateLocalToCloud, getFiles } = useProjects();
+  const { projects, loading, load, remove, migrateLocalToCloud, getFiles, create } = useProjects();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [busy, setBusy] = useState('');
   const [quota, setQuota] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [showNewModal, setShowNewModal] = useState(false);
 
   useEffect(() => {
     load();
@@ -76,6 +78,16 @@ export default function Projects() {
     finally { setBusy(''); }
   }
 
+  async function handleCreateProject(data) {
+    setShowNewModal(false);
+    try {
+      const project = await create(data);
+      navigate(`/studio?project=${encodeURIComponent(project.id)}`);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   const FILTERS = [
     { key: 'all', label: t('projectsPage.all') },
     { key: 'local', label: t('projectsPage.local') },
@@ -89,29 +101,18 @@ export default function Projects() {
           <Link to="/" className="flex items-center gap-2 font-bold text-lg">
             <Braces className="text-emerald-400" size={22} /> {t('app.name')}
           </Link>
-          <nav className="flex items-center gap-2">
-            <Link to="/studio" className="btn btn-ghost flex items-center gap-1"><PenTool size={15} /> {t('app.openStudio')}</Link>
-            {user ? (
-              <>
-                <Link to="/dashboard" className="btn btn-ghost flex items-center gap-1"><Sparkles size={15} /> {t('app.dashboard')}</Link>
-                <Button onClick={logout} className="flex items-center gap-1"><LogOut size={15} /> {t('app.logout')}</Button>
-              </>
-            ) : (
-              <Link to="/login" className="btn btn-ghost flex items-center gap-1">{t('app.login')}</Link>
-            )}
+          <nav className="flex items-center gap-3">
+            {user && <Link to="/dashboard" className="btn btn-ghost !py-1 text-xs flex items-center gap-1"><Home size={13} /> {t('app.dashboard')}</Link>}
+            <Button onClick={logout} className="flex items-center gap-1"><LogOut size={16} /> {t('app.logout')}</Button>
           </nav>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="flex items-center gap-3 mb-1">
-          <FolderKanban size={28} className="text-emerald-400" />
-          <h1 className="text-3xl font-bold">{t('projectsPage.title')}</h1>
-        </div>
+        <h1 className="text-3xl font-bold mb-1">{t('projectsPage.title')}</h1>
         <p className="mb-8" style={{ color: 'var(--muted)' }}>{t('projectsPage.subtitle')}</p>
 
-        {/* Recherche + filtres */}
-        <div className="flex flex-wrap gap-3 mb-6 items-center">
+        <div className="flex items-center justify-between mb-4">
           <div className="relative flex-1 min-w-[220px] max-w-md">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
             <input className="input pl-9" placeholder={t('projectsPage.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -132,12 +133,11 @@ export default function Projects() {
               </button>
             ))}
           </div>
-          <Link to="/studio" className="btn btn-primary flex items-center gap-1 ml-auto">
+          <Button variant="primary" className="flex items-center gap-1 ml-auto" onClick={() => setShowNewModal(true)}>
             <Plus size={15} /> {t('projects.newProject')}
-          </Link>
+          </Button>
         </div>
 
-        {/* Grille projets */}
         {loading ? (
           <div className="flex justify-center py-16"><Spinner /></div>
         ) : filtered.length === 0 ? (
@@ -149,7 +149,7 @@ export default function Projects() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((p, i) => (
               <div
-n                key={p.id}
+                key={p.id}
                 className="project-card rounded-xl p-4 flex flex-col gap-2 anim-rise"
                 style={{ animationDelay: `${Math.min(i, 12) * 45}ms`, background: 'var(--panel)', border: '1px solid var(--border)' }}
               >
@@ -167,9 +167,14 @@ n                key={p.id}
                       <div className="text-xs truncate" style={{ color: 'var(--muted)' }}>{p.namespace} · {p.minecraftVersion}</div>
                     </div>
                   </div>
-                  <Badge color={p.isLocal ? 'var(--warn)' : 'var(--accent-2)'}>
-                    {p.isLocal ? t('projects.localBadge') : t('projects.cloudBadge')}
-                  </Badge>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Badge color={p.isLocal ? 'var(--warn)' : 'var(--accent-2)'}>
+                      {p.isLocal ? t('projects.localBadge') : t('projects.cloudBadge')}
+                    </Badge>
+                    <Link to={`/projects/${p.id}/settings`} title={t('projects.settings')} className="btn btn-ghost !p-1.5" aria-label={t('projects.settings')}>
+                      <Settings size={16} />
+                    </Link>
+                  </div>
                 </div>
                 <div className="flex gap-2 mt-auto">
                   <Button className="!py-1.5 text-sm flex-1 flex items-center justify-center gap-1" onClick={() => navigate(`/studio?project=${encodeURIComponent(p.id)}`)}>
@@ -194,6 +199,9 @@ n                key={p.id}
           onConfirm={confirmDeleteProject}
           onClose={() => setConfirmDelete(null)}
         />
+      )}
+      {showNewModal && (
+        <NewProjectModal onClose={() => setShowNewModal(false)} onCreate={handleCreateProject} />
       )}
     </div>
   );

@@ -35,6 +35,7 @@ export const api = {
   patchSettings: (p) => request('/settings', { method: 'PATCH', body: p }),
 
   /* Projets */
+  getProject: (id) => request(`/projects/${id}`),
   listProjects: () => request('/projects/me'),
   createProject: (p) => request('/projects', { method: 'POST', body: p }),
   updateProject: (id, p) => request(`/projects/${id}`, { method: 'PATCH', body: p }),

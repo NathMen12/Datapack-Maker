@@ -28,8 +28,10 @@ const env = { ...loadEnvFile(), ...process.env };
 
 const isProd = (env.NODE_ENV || 'development') === 'production';
 
-/* Origines autorisees (separees par des virgules si plusieurs). */
-const clientOrigins = (env.CLIENT_ORIGIN || 'http://localhost:5173')
+/* Origines autorisees en cross-origin (separees par des virgules si plusieurs).
+   NB : le same-origin (client servi par cette API) est toujours autorise,
+   independamment de cette liste. */
+const clientOrigins = (env.CLIENT_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);

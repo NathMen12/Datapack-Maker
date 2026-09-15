@@ -2,10 +2,10 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import cookieParser from 'cookie-parser';
-import cors from 'cors';
 import helmet from 'helmet';
 import { config, SERVER_ROOT } from './config.js';
 import { logger, httpColor } from './lib/logger.js';
+import { corsMiddleware } from './middleware/cors.js';
 import { apiLimiter } from './middleware/protect.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
@@ -18,14 +18,11 @@ const app = express();
 app.disable('x-powered-by');
 app.use(helmet());
 
-/* CORS : uniquement les origines configurees (CLIENT_ORIGIN), credentials pour le cookie. */
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin || config.clientOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('origin_not_allowed'));
-  },
-  credentials: true,
-}));
+/* CORS conscient du same-origin : le client servi par cette meme API
+   (port 3000) passe toujours, quelle que soit l ecriture de l hote
+   (localhost / 127.0.0.1). Seules les origins externes listees dans
+   CLIENT_ORIGIN sont acceptees pour le cross-origin (dev Vite, prod). */
+app.use(corsMiddleware);
 
 /* Limite de corps : 1 Mo partout, sauf les routes projets (migration complete
    d un projet local->cloud + icones en data URI) qui admettent 12 Mo.
@@ -72,9 +69,6 @@ app.use((req, res) => res.status(404).json({ error: 'not_found' }));
 app.use((err, req, res, next) => {
   if (err?.status === 413 || err?.type === 'entity.too.large') {
     return res.status(413).json({ error: 'payload_too_large' });
-  }
-  if (err?.message === 'origin_not_allowed') {
-    return res.status(403).json({ error: 'origin_not_allowed' });
   }
   logger.error('Erreur non geree:', err.message);
   res.status(500).json({ error: 'internal_error' });

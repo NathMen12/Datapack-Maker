@@ -150,7 +150,9 @@ export const useProjects = create((set, get) => ({
       if (icon !== undefined) await api.setIcon(p.rawId, icon);
     }
     set((s) => ({
-      projects: s.projects.map((x) => (x.id === projectId ? { ...x, ...patch, hasIcon: patch.icon ? true : x.hasIcon } : x)),
+      projects: s.projects.map((x) => (x.id === projectId
+        ? { ...x, ...patch, hasIcon: patch.icon !== undefined ? Boolean(patch.icon) : x.hasIcon }
+        : x)),
     }));
   },
 

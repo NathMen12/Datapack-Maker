@@ -6,6 +6,7 @@ import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Projects from './pages/Projects.jsx';
+import ProjectSettings from './pages/ProjectSettings.jsx';
 import Studio from './pages/Studio.jsx';
 
 function RequireAuth({ children }) {
@@ -37,6 +38,8 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        {/* Accessible sans compte : les projets locaux (IndexedDB) ont aussi des reglages. */}
+        <Route path="/projects/:id/settings" element={<ProjectSettings />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/studio" element={<Studio />} />

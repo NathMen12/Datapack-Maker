@@ -11,7 +11,11 @@ const projectSchema = z.object({
   name: z.string().trim().min(1).max(64),
   namespace: z.string().trim().regex(/^[a-z0-9_-]+$/, { message: 'namespace invalide' }),
   minecraftVersion: z.string().trim().min(1),
-  description: z.string().max(500).optional().default(''),
+  /* Pas de .default('') ici : combine a .partial() sur le PATCH, ce defaut
+     s'appliquait meme quand le champ etait absent et VIDait la description
+     a chaque mise a jour partielle (ex : simple changement d'icone). */
+  description: z.string().max(500).optional(),
+  icon: z.string().max(5 * 1024 * 1024).optional(),
   files: filesArray.optional(),
 });
 
@@ -22,7 +26,11 @@ function projectRow(row) {
     namespace: row.namespace,
     minecraftVersion: row.minecraft_version,
     description: row.description,
-    hasIcon: Boolean(row.has_icon),
+    /* listProjects expose has_icon (il ne selectionne pas l'icone, trop lourde),
+       alors que getProject fait SELECT * : on deduit dans ce cas. Sans ce
+       repli, hasIcon valait toujours false sur GET /:id et PATCH /:id et
+       l'icone ne s'affichait jamais apres enregistrement. */
+    hasIcon: Boolean(row.has_icon ?? (row.icon && row.icon.length > 0)),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -42,18 +50,23 @@ router.get('/me', (req, res) => {
   res.json({ projects: rows });
 });
 
+/* Detail d'un projet (charge la page Settings). */
+router.get('/:id', (req, res) => {
+  const project = queries.getProject.get(Number(req.params.id), req.user.id);
+  if (!project) return res.status(404).json({ error: 'project_not_found' });
+  res.json({ project: projectRow(project) });
+});
+
 router.post('/', (req, res) => {
   const parsed = projectSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'invalid_input', details: parsed.error.issues });
   }
-  const { name, namespace, minecraftVersion, description, files } = parsed.data;
+  const { name, namespace, minecraftVersion, description, files, icon } = parsed.data;
   const tx = db.transaction(() => {
-    const info = queries.insertProject.run(req.user.id, name, namespace, minecraftVersion, description, '');
+    const info = queries.insertProject.run(req.user.id, name, namespace, minecraftVersion, description ?? '', icon || '');
     const pid = info.lastInsertRowid;
-    for (const f of files || []) {
-      queries.upsertFile.run(pid, f.path, f.content);
-    }
+    for (const f of files || []) queries.upsertFile.run(pid, f.path, f.content);
     return pid;
   });
   const pid = tx();
@@ -69,11 +82,19 @@ router.patch('/:id', (req, res) => {
     return res.status(400).json({ error: 'invalid_input', details: parsed.error.issues });
   }
   const d = parsed.data;
+  let icon = project.icon;
+  if ('icon' in d && d.icon !== undefined) {
+    if (d.icon && !isValidPngDataUri(d.icon)) {
+      return res.status(400).json({ error: 'invalid_icon' });
+    }
+    icon = d.icon;
+  }
   queries.updateProject.run(
     d.name ?? project.name,
     d.namespace ?? project.namespace,
+    d.minecraftVersion ?? project.minecraft_version,
     d.description ?? project.description,
-    'icon' in d ? d.icon : project.icon,
+    icon,
     project.id,
     req.user.id
   );
@@ -123,7 +144,7 @@ router.post('/:id/icon', (req, res) => {
   if (icon && !isValidPngDataUri(icon)) {
     return res.status(400).json({ error: 'invalid_icon' });
   }
-  queries.updateProject.run(project.name, project.namespace, project.description, icon, project.id, req.user.id);
+  queries.updateProject.run(project.name, project.namespace, project.minecraft_version, project.description, icon, project.id, req.user.id);
   res.json({ ok: true });
 });
 
@@ -140,7 +161,7 @@ router.get('/:id/icon', (req, res) => {
 router.delete('/:id/icon', (req, res) => {
   const project = ownProject(req, res);
   if (!project) return;
-  queries.updateProject.run(project.name, project.namespace, project.description, '', project.id, req.user.id);
+  queries.updateProject.run(project.name, project.namespace, project.minecraft_version, project.description, '', project.id, req.user.id);
   res.json({ ok: true });
 });
 

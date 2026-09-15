@@ -75,7 +75,8 @@
     "updatedAt": "Updated {{date}}",
     "nameRequired": "Name is required.",
     "invalidNamespace": "Invalid namespace (lowercase, digits, - and _).",
-    "open": "Open"
+    "open": "Open",
+    "settings": "Parametres"
   },
   "studio": {
     "files": "Files",
@@ -107,6 +108,12 @@
     "aiDisabled": "Autocompletion disabled in settings",
     "storageFull": "Browser storage is full! Export or delete projects to free up space.",
     "storageError": "Local storage error: {{message}}",
+    "fsLinkTitle": "Link to a PC folder (save directly to disk)",
+    "fsLinkedTitle": "Folder linked — click to detach, right-click to resync",
+    "fsLinked": "Folder linked: files are written directly to disk",
+    "fsUnlinked": "Folder link removed",
+    "fsUnsupported": "Your browser does not support folder linking (Chrome, Edge or Opera required)",
+    "fsDenied": "Folder access denied",
     "importSuccess": "Datapack imported successfully",
     "importInvalid": "Invalid ZIP: pack.mcmeta not found at root.",
     "exportDone": "ZIP export generated",
@@ -152,5 +159,35 @@
     "export": "Export",
     "empty": "No project to display.",
     "loading": "Loading…"
+  },
+  "projectSettings": {
+    "title": "Project settings",
+    "subtitle": "Name, namespace, Minecraft version and datapack icon.",
+    "back": "Back to projects",
+    "general": "General information",
+    "name": "Project name",
+    "namespace": "Namespace",
+    "namespaceHint": "Lowercase letters, digits, dashes and underscores only",
+    "version": "Minecraft version",
+    "description": "Description",
+    "icon": "Project icon",
+    "iconHint": "Square PNG, 128x128 recommended (max 512 KB)",
+    "chooseIcon": "Choose a PNG",
+    "removeIcon": "Remove icon",
+    "iconTooBig": "Image too large (512 KB maximum).",
+    "details": "Details",
+    "badge": "Storage type",
+    "files": "Files",
+    "created": "Created",
+    "updated": "Last modified",
+    "actions": "Actions",
+    "actionsHint": "Open the project in the studio or generate a ready-to-install ZIP archive.",
+    "exporting": "Exporting...",
+    "dangerZone": "Danger zone",
+    "dangerHint": "Deleting is permanent and also removes every file in the project.",
+    "save": "Save changes",
+    "saved": "Project saved",
+    "error": "Could not save the project",
+    "noProject": "Project not found"
   }
 }
