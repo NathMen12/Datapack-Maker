@@ -11,6 +11,8 @@ import { useProjects } from '../stores/projects.js';
 import { MC_VERSIONS, DEFAULT_MC_VERSION } from '../lib/datapack.js';
 import { Button, Field, Spinner } from '../components/ui.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
+import ShareSection from '../components/ShareSection.jsx';
+import ModrinthSection from '../components/ModrinthSection.jsx';
 import { exportToZip } from '../lib/zip.js';
 
 const MAX_ICON = 512 * 1024;
@@ -275,6 +277,10 @@ export default function ProjectSettings() {
             </Button>
           </div>
         </section>
+
+        {/* Partage et publication : projets cloud uniquement. */}
+        {!project.isLocal && <ShareSection project={project} />}
+        {!project.isLocal && <ModrinthSection project={project} />}
 
         <section className="rounded-2xl p-6 anim-rise" style={{ background: 'rgba(248,113,113,.05)', border: '1px solid rgba(248,113,113,.28)' }}>
           <h2 className="font-semibold mb-1" style={{ color: 'var(--danger)' }}>{t('projectSettings.dangerZone')}</h2>

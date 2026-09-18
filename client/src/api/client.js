@@ -45,6 +45,22 @@ export const api = {
     request(`/projects/${id}/files`, { method: 'PUT', body: { saves, deletes } }),
   setIcon: (id, icon) => request(`/projects/${id}/icon`, { method: 'POST', body: { icon } }),
 
+  /* Partage : collaborateurs d'un projet cloud */
+  getCollaborators: (id) => request(`/projects/${id}/collaborators`),
+  inviteCollaborator: (id, p) => request(`/projects/${id}/collaborators`, { method: 'POST', body: p }),
+  updateCollaborator: (id, userId, role) => request(`/projects/${id}/collaborators/${userId}`, { method: 'PATCH', body: { role } }),
+  removeCollaborator: (id, userId) => request(`/projects/${id}/collaborators/${userId}`, { method: 'DELETE' }),
+
+  /* Modrinth */
+  getModrinthAccount: () => request('/modrinth/account'),
+  saveModrinthToken: (token) => request('/modrinth/token', { method: 'PUT', body: { token } }),
+  deleteModrinthToken: () => request('/modrinth/token', { method: 'DELETE' }),
+  listModrinthProjects: () => request('/modrinth/projects'),
+  getModrinthState: (id) => request(`/projects/${id}/modrinth`),
+  linkModrinth: (id, project) => request(`/projects/${id}/modrinth`, { method: 'PUT', body: { project } }),
+  unlinkModrinth: (id) => request(`/projects/${id}/modrinth`, { method: 'DELETE' }),
+  publishModrinth: (id, p) => request(`/projects/${id}/modrinth/publish`, { method: 'POST', body: p }),
+
   /* IA */
   aiComplete: (p) => request('/ai/complete', { method: 'POST', body: p }),
   aiQuota: () => request('/ai/quota'),

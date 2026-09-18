@@ -5,7 +5,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import {
   Braces, ChevronRight, Download, FolderSync, Home, Image as ImageIcon,
   LogIn, Palette, Plus, Settings as SettingsIcon, Sparkles, Upload, AlertTriangle, Trash2, File, X,
-  FolderCog, FolderKanban,
+  FolderCog, FolderKanban, Eye,
 } from 'lucide-react';
 import { useAuth } from '../stores/auth.js';
 import { useProjects } from '../stores/projects.js';
@@ -22,6 +22,7 @@ import ColorToolModal from '../components/ColorToolModal.jsx';
 import NameModal from '../components/NameModal.jsx';
 import { Button, Modal } from '../components/ui.jsx';
 import { exportToZip, importFromZip } from '../lib/zip.js';
+import { realtime } from '../lib/realtime.js';
 import { getMCVersionInfo } from '../lib/datapack.js';
 import {
   isFSAvailable, linkFolder, getLinkedFolder, unlinkFolder,
@@ -54,7 +55,12 @@ export default function Studio() {
   const zipInputRef = useRef(null);
   const filesRef = useRef([]);
   filesRef.current = files;
+  const activePathRef = useRef('');
+  activePathRef.current = activePath;
   const saveTimer = useRef(null);
+  /* Membres connectes au projet ouvert (temps reel) + role de l'utilisateur. */
+  const [presence, setPresence] = useState([]);
+  const [myRole, setMyRole] = useState(null);
 
   function showToast(kind, text) {
     setToast({ kind, text });
@@ -84,6 +90,98 @@ export default function Studio() {
     if (!activeProject) openProject(projects[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects, wantedProjectId, activeProject, loading]);
+
+  /* ---------- Collaboration temps reel (projets cloud) ---------- */
+  /* Rejoint la salle du projet ouvert : presence des membres, modifications
+     et suppressions distantes, changements de partage, invitations. */
+  useEffect(() => {
+    if (!user || !activeProject || activeProject.isLocal) {
+      setPresence([]);
+      setMyRole(null);
+      return undefined;
+    }
+    const pid = Number(activeProject.rawId);
+    realtime.join(pid);
+
+    const onReady = (m) => {
+      if (Number(m.projectId) !== pid) return;
+      setMyRole(m.role || null);
+      setPresence(m.users || []);
+    };
+    const onPresence = (m) => {
+      if (Number(m.projectId) !== pid) return;
+      setPresence(m.users || []);
+    };
+    const onChange = (m) => {
+      if (Number(m.projectId) !== pid) return;
+      setFiles((fs) => fs.map((f) => (f.path === m.path ? { ...f, content: m.content } : f)));
+      setOpenTabs((tabs) => tabs.map((x) => (x.path === m.path ? { ...x, content: m.content } : x)));
+      if (activePathRef.current === m.path) setContent(m.content);
+      showToast('ok', t('studio.remoteChange', { user: m.by, file: String(m.path).split('/').pop() }));
+    };
+    const onDelete = (m) => {
+      if (Number(m.projectId) !== pid) return;
+      setFiles((fs) => fs.filter((f) => f.path !== m.path));
+      setOpenTabs((tabs) => tabs.filter((x) => x.path !== m.path));
+      if (activePathRef.current === m.path) {
+        const remaining = filesRef.current.filter((f) => f.path !== m.path);
+        if (remaining.length) { setActivePath(remaining[0].path); setContent(remaining[0].content); }
+        else { setActivePath(''); setContent(''); }
+      }
+      showToast('ok', t('studio.remoteDelete', { user: m.by, file: String(m.path).split('/').pop() }));
+    };
+    const onChanged = (m) => {
+      if (Number(m.projectId) !== pid || !m.project) return;
+      setActiveProject((p) => (p && Number(p.rawId) === pid
+        ? { ...p, name: m.project.name, namespace: m.project.namespace, minecraftVersion: m.project.minecraftVersion, description: m.project.description }
+        : p));
+      load();
+      showToast('ok', t('studio.remoteProjectChange', { user: m.by }));
+    };
+    const onRemoved = (m) => {
+      showToast('error', t('studio.projectRemoved', { name: m.projectName || '' }));
+      load();
+      if (Number(m.projectId) === pid) navigate('/projects');
+    };
+    const onInvited = (m) => {
+      showToast('ok', t('studio.invited', { name: m.projectName || '' }));
+      load();
+    };
+    const onRole = (m) => {
+      showToast('ok', t('studio.roleChanged', { name: m.projectName || '', role: t(`studio.role.${m.role}`) }));
+      load();
+    };
+    const onCollab = (m) => {
+      if (Number(m.projectId) !== pid) return;
+      /* La page Parametres (ouverte ailleurs) rafraichit la liste des membres. */
+      window.dispatchEvent(new CustomEvent('dm:collaborators-changed', { detail: { projectId: pid } }));
+    };
+
+    realtime.on('ready', onReady);
+    realtime.on('presence', onPresence);
+    realtime.on('file:change', onChange);
+    realtime.on('file:delete', onDelete);
+    realtime.on('project:changed', onChanged);
+    realtime.on('project:removed', onRemoved);
+    realtime.on('project:invited', onInvited);
+    realtime.on('project:role', onRole);
+    realtime.on('collaborators:changed', onCollab);
+    return () => {
+      realtime.off('ready', onReady);
+      realtime.off('presence', onPresence);
+      realtime.off('file:change', onChange);
+      realtime.off('file:delete', onDelete);
+      realtime.off('project:changed', onChanged);
+      realtime.off('project:removed', onRemoved);
+      realtime.off('project:invited', onInvited);
+      realtime.off('project:role', onRole);
+      realtime.off('collaborators:changed', onCollab);
+      realtime.leave();
+      setPresence([]);
+      setMyRole(null);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, activeProject?.rawId, activeProject?.isLocal]);
 
   async function openProject(p) {
     /* Activer le projet AVANT le chargement des fichiers : meme si le
@@ -128,6 +226,8 @@ export default function Studio() {
       try {
         await saveFiles(activeProject.id, [{ path, content: value }], []);
         setFiles((fs) => fs.map((f) => (f.path === path ? { ...f, path: f.path, content: value } : f)));
+        /* Diffusion temps reel aux autres membres du projet cloud. */
+        if (!activeProject.isLocal) realtime.fileChange(activeProject.rawId, path, value);
         /* Dossier du PC lie : ecriture directe dans le dossier (best effort). */
         if (fsHandleRef.current && fsLinked) {
           try { await writeFsFile(fsHandleRef.current, path, value); } catch { /* disque plein/retire : ignore */ }
@@ -225,6 +325,10 @@ export default function Studio() {
         await saveFiles(activeProject.id, [{ path, content: file ? file.content : "" }], [oldPath]);
         setFiles((fs) => fs.map((f) => (f.path === oldPath ? { ...f, path } : f)));
         if (activePath === oldPath) setActivePath(path);
+        if (!activeProject.isLocal) {
+          realtime.fileChange(activeProject.rawId, path, file ? file.content : "");
+          realtime.fileDelete(activeProject.rawId, oldPath);
+        }
       } else if (mode === "newFolder") {
         setExtraFolders((set) => new Set([...set, path]));
         showToast("ok", t("studio.folderCreated"));
@@ -250,6 +354,7 @@ export default function Studio() {
     setConfirmDelete(null);
     try {
       await saveFiles(activeProject.id, [], [path]);
+      if (!activeProject.isLocal) realtime.fileDelete(activeProject.rawId, path);
       /* Dossier lie : supprimer aussi le fichier du disque (best effort). */
       if (fsHandleRef.current && fsLinked) {
         try { await deleteFsFile(fsHandleRef.current, path); } catch { /* absent du disque : ok */ }
@@ -390,6 +495,8 @@ export default function Studio() {
   }
 
   /* ---------- Rendu ---------- */
+  /* Un lecteur (viewer) ne peut pas modifier : l'editeur passe en lecture seule. */
+  const isViewer = myRole === 'viewer';
   const editorExtensions = useMemo(() => [
     mcfunction(),
     mcHighlight(),
@@ -415,6 +522,21 @@ export default function Studio() {
             {activeProject ? activeProject.name : t('app.openStudio')}
             {activeProject && <span className="ml-2" style={{ color: 'var(--muted)' }}>{activeProject.namespace}</span>}
           </span>
+          {/* Membres connectes sur ce projet (temps reel). */}
+          {presence.length > 0 && (
+            <div className="flex items-center gap-1 shrink-0">
+              {presence.map((u) => (
+                <span
+                  key={u.id}
+                  title={`${u.username} — ${t(`studio.role.${u.role}`)}`}
+                  className="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center"
+                  style={{ background: 'var(--panel-2)', border: '1px solid var(--accent-2)', color: 'var(--accent-2)' }}
+                >
+                  {String(u.username || '?').slice(0, 2).toUpperCase()}
+                </span>
+              ))}
+            </div>
+          )}
           {/* Creer un projet depuis le studio, sans repasser par la page Projets. */}
           <button className="btn btn-ghost !py-1 !px-1.5 shrink-0" title={t('projects.newProject')} onClick={() => setModal('newProject')}>
             <Plus size={15} />
@@ -516,6 +638,11 @@ export default function Studio() {
               {/* Barre de statut du fichier actif */}
               <div className="h-9 flex items-center gap-2 px-4 border-b text-xs" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
                 <span className="font-mono">{activePath}</span>
+                {isViewer && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded" style={{ background: 'var(--panel-2)', color: 'var(--warn)' }}>
+                    <Eye size={11} /> {t('studio.readOnly')}
+                  </span>
+                )}
                 {user && settings.autocompleteEnabled && (
                   <span className="ml-auto flex items-center gap-1"><Sparkles size={11} className="text-emerald-400" /> {t("editor.aiHint")} — Tab</span>
                 )}
@@ -528,6 +655,7 @@ export default function Studio() {
                   height="100%"
                   theme="none"
                   basicSetup={false}
+                  editable={!isViewer}
                   extensions={editorExtensions}
                   onChange={onEditorChange}
                 />

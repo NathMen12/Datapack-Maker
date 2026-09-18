@@ -129,7 +129,19 @@
     "nameFileHint": "Letters, digits, - and _ ; the .mcfunction extension is added automatically",
     "folderCreated": "Folder ready: create a file inside to materialize it",
     "deleteFileConfirm": "Permanently delete this file?",
-    "selectFile": "Select a ZIP file"
+    "selectFile": "Select a ZIP file",
+    "readOnly": "Read only",
+    "role": {
+      "owner": "Owner",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    },
+    "remoteChange": "{{user}} edited {{file}}",
+    "remoteDelete": "{{user}} deleted {{file}}",
+    "remoteProjectChange": "{{user}} updated the project settings",
+    "projectRemoved": "You no longer have access to \"{{name}}\"",
+    "invited": "You were invited to \"{{name}}\"",
+    "roleChanged": "Your role on \"{{name}}\": {{role}}"
   },
   "editor": {
     "aiAccept": "Tab to accept",
@@ -189,5 +201,76 @@
     "saved": "Project saved",
     "error": "Could not save the project",
     "noProject": "Project not found"
+  },
+  "sharing": {
+    "title": "Sharing & collaboration",
+    "hint": "Invite users by email or username. Viewer: read-only. Editor: can edit files.",
+    "owner": "Owner",
+    "online": "Online",
+    "roles": {
+      "viewer": "Viewer",
+      "editor": "Editor"
+    },
+    "invite": "Invite",
+    "identifierPlaceholder": "User email or username",
+    "remove": "Remove from project",
+    "leave": "Leave this project",
+    "errors": {
+      "user_not_found": "User not found (check the email or username).",
+      "already_owner": "This user already owns the project.",
+      "forbidden": "Only the owner can do that.",
+      "invalid_input": "Invalid input.",
+      "collaborator_not_found": "This member no longer exists."
+    }
+  },
+  "modrinth": {
+    "title": "Publish to Modrinth",
+    "hint": "Link this project to Modrinth, then publish versions in one click with automatic suggestions.",
+    "tokenNeeded": "A Modrinth personal access token is required to publish.",
+    "tokenPlaceholder": "Modrinth personal access token (PAT)",
+    "tokenHelp": "Create a token on modrinth.com (VERSION_CREATE permission required)",
+    "tokenOk": "Modrinth account linked: {{username}}",
+    "tokenInvalid": "The saved token is rejected by Modrinth (revoked?). Replace it.",
+    "saveToken": "Save token",
+    "removeToken": "Remove token",
+    "linkHint": "Link this project to an existing Modrinth project (slug or ID).",
+    "linkPlaceholder": "Modrinth project slug (e.g. my-datapack)",
+    "link": "Link",
+    "listMine": "My projects",
+    "loading": "Loading…",
+    "unlink": "Unlink",
+    "notLinkedOwnerOnly": "This project is not linked to Modrinth yet (owner only).",
+    "versionNumber": "Version number",
+    "versionName": "Version name",
+    "gameVersions": "Compatible Minecraft versions",
+    "gameVersionsHint": "Versions this datapack works on (pre-selected from the pack_format).",
+    "versionType": "Version type",
+    "types": {
+      "release": "Release",
+      "beta": "Beta",
+      "alpha": "Alpha"
+    },
+    "changelog": "Changelog (optional)",
+    "publish": "Publish to Modrinth",
+    "publishing": "Publishing…",
+    "published": "Version published — view on Modrinth",
+    "publishOwnerOnly": "Only the owner can publish.",
+    "publishedVersions": "Published versions",
+    "formRequired": "Version number and name are required.",
+    "gameVersionRequired": "Pick at least one Minecraft version.",
+    "errors": {
+      "modrinth_invalid_token": "Invalid or revoked Modrinth token.",
+      "modrinth_forbidden": "The token lacks the required permission (VERSION_CREATE).",
+      "modrinth_not_found": "Modrinth project not found.",
+      "modrinth_rate_limited": "Too many requests to Modrinth, try again in a moment.",
+      "modrinth_unreachable": "Modrinth is unreachable, try again later.",
+      "modrinth_token_required": "Save your Modrinth token first.",
+      "modrinth_not_linked": "Link the project to Modrinth first.",
+      "invalid_zip": "The generated archive is invalid.",
+      "invalid_input": "Invalid form.",
+      "forbidden": "Only the owner can do that.",
+      "no_files": "This project has no files.",
+      "modrinth_error": "Unexpected Modrinth error."
+    }
   }
 }

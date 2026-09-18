@@ -4,8 +4,8 @@ import { config } from '../config.js';
    CORS maison, conscient du same-origin.
    - Requete sans Origin (curl, navigation directe) : laisse passer.
    - Origin identique au Host (client servi par cette API, ex.
-     http://127.0.0.1:3000) : same-origin, aucun en-tete CORS requis.
-   - Origin listee dans CLIENT_ORIGIN (dev Vite 5173, etc.) : en-tetes CORS.
+     http://127.0.0.1:40007) : same-origin, aucun en-tete CORS requis.
+   - Origin listee dans CLIENT_ORIGIN (dev Vite 40071, etc.) : en-tetes CORS.
    - Tout le reste : 403 propre.
    ============================================================ */
 

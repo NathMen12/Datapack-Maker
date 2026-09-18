@@ -18,9 +18,11 @@ export const MC_VERSIONS = [
   { version: '1.21.4', packFormat: 61, functionFolder: 'function',  tagFolder: 'tags/function' },
   { version: '1.21.5', packFormat: 71, functionFolder: 'function',  tagFolder: 'tags/function' },
   { version: '1.21.6', packFormat: 80, functionFolder: 'function',  tagFolder: 'tags/function' },
-  { version: '1.21.7', packFormat: 80, functionFolder: 'function',  tagFolder: 'tags/function' },
+  { version: '1.21.7', packFormat: 81, functionFolder: 'function',  tagFolder: 'tags/function' },
   { version: '1.21.8', packFormat: 81, functionFolder: 'function',  tagFolder: 'tags/function' },
   { version: '1.21.9', packFormat: 88, functionFolder: 'function',  tagFolder: 'tags/function' },
+  { version: '1.21.10', packFormat: 88, functionFolder: 'function', tagFolder: 'tags/function' },
+  { version: '1.21.11', packFormat: 94, functionFolder: 'function', tagFolder: 'tags/function' },
 ];
 
 export const DEFAULT_MC_VERSION = '1.21.8';

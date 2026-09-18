@@ -30,8 +30,9 @@ const isProd = (env.NODE_ENV || 'development') === 'production';
 
 /* Origines autorisees en cross-origin (separees par des virgules si plusieurs).
    NB : le same-origin (client servi par cette API) est toujours autorise,
-   independamment de cette liste. */
-const clientOrigins = (env.CLIENT_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
+   independamment de cette liste.
+   Ports de test : API 40007, client Vite 40071. */
+const clientOrigins = (env.CLIENT_ORIGIN || 'http://localhost:40071,http://127.0.0.1:40071')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
@@ -44,15 +45,21 @@ const aiQuotaTokens = Number.isFinite(rawQuota) && rawQuota > 0 ? Math.floor(raw
 export const config = {
   env: env.NODE_ENV || 'development',
   isProd,
-  port: Number(env.PORT || 3000),
+  port: Number(env.PORT || 40007),
   clientOrigins,
   jwtSecret: env.JWT_SECRET || 'dev-secret-do-not-use-in-prod',
   jwtSecretProvided: Boolean(env.JWT_SECRET),
-  dbPath: path.join(SERVER_ROOT, env.DB_PATH || 'data/app.db'),
+  dbPath: path.isAbsolute(env.DB_PATH || '') ? env.DB_PATH : path.join(SERVER_ROOT, env.DB_PATH || 'data/app.db'),
   logsDir: path.join(SERVER_ROOT, 'logs'),
   groqApiKey: env.GROQ_API_KEY || '',
   aiModel: env.AI_MODEL || 'openai/gpt-oss-120b',
   aiQuotaTokens,
+  /* API Modrinth (surchargeable pour les tests : serveur factice local). */
+  modrinthApiBase: (env.MODRINTH_API_BASE || 'https://api.modrinth.com/v2').replace(/\/+$/, ''),
+  appVersion: env.APP_VERSION || '1.1.0',
+  /* Cle de chiffrement des secrets tiers (jetons Modrinth) au repos.
+     Dediee si TOKEN_SECRET est fourni, sinon derivee du secret JWT. */
+  tokenSecret: env.TOKEN_SECRET || env.JWT_SECRET || 'dev-secret-do-not-use-in-prod',
 };
 
 export { SERVER_ROOT };

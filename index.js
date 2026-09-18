@@ -2,9 +2,9 @@
 /* ============================================================
    Datapack Maker — lanceur racine (client + serveur).
    Usage :
-     node index.js            -> dev    : API (3000) + client Vite (5173)
+     node index.js            -> dev    : API (40007) + client Vite (40071)
      node index.js --build    -> build production du client
-     node index.js --start    -> prod   : l'API sert le client sur le port 3000
+     node index.js --start    -> prod   : l'API sert le client sur le port 40007
    ============================================================ */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -58,10 +58,10 @@ if (mode === '--build') {
     console.error('\u001b[31m[datapack-maker]\u001b[0m client/dist introuvable. Lancez d\'abord : node index.js --build');
     process.exit(1);
   }
-  console.log('\u001b[36m[datapack-maker]\u001b[0m Mode production : http://localhost:3000\n');
+  console.log('\u001b[36m[datapack-maker]\u001b[0m Mode production : http://localhost:40007\n');
   run('server', npmCmd, ['run', 'start', '-w', 'server'], '\u001b[36m');
 } else {
-  console.log('\u001b[36m[datapack-maker]\u001b[0m Mode dev : API http://localhost:3000 | Client http://localhost:5173\n');
+  console.log('\u001b[36m[datapack-maker]\u001b[0m Mode dev : API http://localhost:40007 | Client http://localhost:40071\n');
   run('server', npmCmd, ['run', 'dev', '-w', 'server'], '\u001b[36m');
   run('client', npmCmd, ['run', 'dev', '-w', 'client'], '\u001b[32m');
 }

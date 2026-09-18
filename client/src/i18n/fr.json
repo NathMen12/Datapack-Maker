@@ -129,7 +129,19 @@
     "nameFileHint": "Lettres, chiffres, - et _ ; l'extension .mcfunction est ajoutée automatiquement",
     "folderCreated": "Dossier prêt : créez-y un fichier pour le materialiser",
     "deleteFileConfirm": "Supprimer définitivement ce fichier ?",
-    "selectFile": "Sélectionner un fichier ZIP"
+    "selectFile": "Sélectionner un fichier ZIP",
+    "readOnly": "Lecture seule",
+    "role": {
+      "owner": "Propriétaire",
+      "editor": "Éditeur",
+      "viewer": "Lecteur"
+    },
+    "remoteChange": "{{user}} a modifié {{file}}",
+    "remoteDelete": "{{user}} a supprimé {{file}}",
+    "remoteProjectChange": "{{user}} a mis à jour les réglages du projet",
+    "projectRemoved": "Vous n'avez plus accès à « {{name}} »",
+    "invited": "Vous avez été invité sur « {{name}} »",
+    "roleChanged": "Votre rôle sur « {{name}} » : {{role}}"
   },
   "editor": {
     "aiAccept": "Tab pour accepter",
@@ -189,5 +201,76 @@
     "saved": "Projet enregistré",
     "error": "Erreur lors de la sauvegarde",
     "noProject": "Projet introuvable"
+  },
+  "sharing": {
+    "title": "Partage et collaboration",
+    "hint": "Invitez des utilisateurs par e-mail ou pseudo. Lecteur : lecture seule. Éditeur : modification des fichiers.",
+    "owner": "Propriétaire",
+    "online": "En ligne",
+    "roles": {
+      "viewer": "Lecteur",
+      "editor": "Éditeur"
+    },
+    "invite": "Inviter",
+    "identifierPlaceholder": "E-mail ou pseudo de l'utilisateur",
+    "remove": "Retirer du projet",
+    "leave": "Quitter ce projet",
+    "errors": {
+      "user_not_found": "Utilisateur introuvable (vérifiez l'e-mail ou le pseudo).",
+      "already_owner": "Cet utilisateur est déjà le propriétaire du projet.",
+      "forbidden": "Action réservée au propriétaire.",
+      "invalid_input": "Saisie invalide.",
+      "collaborator_not_found": "Ce membre n'existe plus."
+    }
+  },
+  "modrinth": {
+    "title": "Publication sur Modrinth",
+    "hint": "Liez ce projet à Modrinth puis publiez vos versions en un clic, avec suggestions automatiques.",
+    "tokenNeeded": "Un jeton d'accès personnel Modrinth est nécessaire pour publier.",
+    "tokenPlaceholder": "Jeton personnel Modrinth (PAT)",
+    "tokenHelp": "Créer un jeton sur modrinth.com (permission VERSION_CREATE requise)",
+    "tokenOk": "Compte Modrinth lié : {{username}}",
+    "tokenInvalid": "Le jeton enregistré est refusé par Modrinth (révoqué ?). Remplacez-le.",
+    "saveToken": "Enregistrer le jeton",
+    "removeToken": "Supprimer le jeton",
+    "linkHint": "Liez ce projet à un projet Modrinth existant (slug ou identifiant).",
+    "linkPlaceholder": "Slug du projet Modrinth (ex. mon-datapack)",
+    "link": "Lier",
+    "listMine": "Mes projets",
+    "loading": "Chargement…",
+    "unlink": "Délier",
+    "notLinkedOwnerOnly": "Le projet n'est pas encore lié à Modrinth (réservé au propriétaire).",
+    "versionNumber": "Numéro de version",
+    "versionName": "Nom de la version",
+    "gameVersions": "Versions de Minecraft compatibles",
+    "gameVersionsHint": "Versions sur lesquelles ce datapack fonctionne (pré-sélectionnées selon le pack_format).",
+    "versionType": "Type de version",
+    "types": {
+      "release": "Release",
+      "beta": "Beta",
+      "alpha": "Alpha"
+    },
+    "changelog": "Changelog (optionnel)",
+    "publish": "Publier sur Modrinth",
+    "publishing": "Publication…",
+    "published": "Version publiée — voir sur Modrinth",
+    "publishOwnerOnly": "Seul le propriétaire peut publier.",
+    "publishedVersions": "Versions déjà publiées",
+    "formRequired": "Le numéro et le nom de la version sont obligatoires.",
+    "gameVersionRequired": "Choisissez au moins une version de Minecraft.",
+    "errors": {
+      "modrinth_invalid_token": "Jeton Modrinth invalide ou révoqué.",
+      "modrinth_forbidden": "Le jeton n'a pas la permission nécessaire (VERSION_CREATE requis).",
+      "modrinth_not_found": "Projet Modrinth introuvable.",
+      "modrinth_rate_limited": "Trop de requêtes vers Modrinth, réessayez dans un instant.",
+      "modrinth_unreachable": "Modrinth est injoignable, réessayez plus tard.",
+      "modrinth_token_required": "Enregistrez d'abord votre jeton Modrinth.",
+      "modrinth_not_linked": "Liez d'abord le projet à Modrinth.",
+      "invalid_zip": "L'archive générée est invalide.",
+      "invalid_input": "Formulaire invalide.",
+      "forbidden": "Action réservée au propriétaire.",
+      "no_files": "Le projet ne contient aucun fichier.",
+      "modrinth_error": "Erreur Modrinth inattendue."
+    }
   }
 }

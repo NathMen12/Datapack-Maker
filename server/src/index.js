@@ -12,6 +12,8 @@ import usersRoutes from './routes/users.js';
 import projectsRoutes from './routes/projects.js';
 import aiRoutes from './routes/ai.js';
 import settingsRoutes from './routes/settings.js';
+import modrinthRoutes from './routes/modrinth.js';
+import { attachRealtime } from './services/realtime.js';
 
 const app = express();
 
@@ -19,9 +21,9 @@ app.disable('x-powered-by');
 app.use(helmet());
 
 /* CORS conscient du same-origin : le client servi par cette meme API
-   (port 3000) passe toujours, quelle que soit l ecriture de l hote
+   (port 40007) passe toujours, quelle que soit l ecriture de l hote
    (localhost / 127.0.0.1). Seules les origins externes listees dans
-   CLIENT_ORIGIN sont acceptees pour le cross-origin (dev Vite, prod). */
+   CLIENT_ORIGIN sont acceptees pour le cross-origin (dev Vite 40071, prod). */
 app.use(corsMiddleware);
 
 /* Limite de corps : 1 Mo partout, sauf les routes projets (migration complete
@@ -55,6 +57,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/modrinth', modrinthRoutes);
 
 /* Servir le client build (client/dist) en production, si present. */
 const CLIENT_DIST = path.resolve(SERVER_ROOT, '../client/dist');
@@ -85,6 +88,10 @@ const server = app.listen(config.port, () => {
     logger.alert('JWT_SECRET non defini : secret de dev par defaut actif (DANGER en production)');
   }
 });
+
+/* Collaboration temps reel : WebSocket monte sur le meme serveur HTTP (/ws),
+   donc aucun port supplementaire ni configuration de proxy additionnelle. */
+attachRealtime(server);
 
 process.on('unhandledRejection', (reason) => {
   logger.error('Promesse rejetee non geree:', reason);

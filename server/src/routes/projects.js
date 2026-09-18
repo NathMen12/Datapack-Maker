@@ -2,7 +2,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { queries, db } from '../db/index.js';
 import { requireAuth } from '../middleware/auth.js';
+import { accessProject } from '../middleware/access.js';
+import { broadcastToProject, projectPresence } from '../services/realtime.js';
 import { filePath, filesArray, isValidPngDataUri } from '../middleware/validate.js';
+import collaboratorsRouter from './collaborators.js';
+import projectModrinthRouter from './projectModrinth.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -19,7 +23,9 @@ const projectSchema = z.object({
   files: filesArray.optional(),
 });
 
-function projectRow(row) {
+/* Role de l'appelant sur le projet : 'owner' pour ses propres projets,
+   'editor'/'viewer' pour les projets partages (voir middleware/access.js). */
+function projectRow(row, role = 'owner') {
   return {
     id: row.id,
     name: row.name,
@@ -31,30 +37,30 @@ function projectRow(row) {
        repli, hasIcon valait toujours false sur GET /:id et PATCH /:id et
        l'icone ne s'affichait jamais apres enregistrement. */
     hasIcon: Boolean(row.has_icon ?? (row.icon && row.icon.length > 0)),
+    modrinthProject: row.modrinth_project || '',
+    role,
+    shared: role !== 'owner',
+    owner: row.owner_username || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
-function ownProject(req, res) {
-  const project = queries.getProject.get(Number(req.params.id), req.user.id);
-  if (!project) {
-    res.status(404).json({ error: 'project_not_found' });
-    return null;
-  }
-  return project;
-}
-
 router.get('/me', (req, res) => {
-  const rows = queries.listProjects.all(req.user.id).map(projectRow);
-  res.json({ projects: rows });
+  /* Projets possedes + projets partages par quelqu'un d'autre. */
+  const owned = queries.listProjects.all(req.user.id).map((p) => projectRow(p, 'owner'));
+  const shared = queries.listSharedProjects.all(req.user.id).map((p) => projectRow(p, p.role));
+  res.json({ projects: [...owned, ...shared] });
 });
 
 /* Detail d'un projet (charge la page Settings). */
-router.get('/:id', (req, res) => {
-  const project = queries.getProject.get(Number(req.params.id), req.user.id);
-  if (!project) return res.status(404).json({ error: 'project_not_found' });
-  res.json({ project: projectRow(project) });
+router.get('/:id', accessProject('viewer'), (req, res) => {
+  res.json({ project: projectRow(req.project, req.projectRole) });
+});
+
+/* Qui est connecte sur ce projet (indicateur de collaboration). */
+router.get('/:id/presence', accessProject('viewer'), (req, res) => {
+  res.json({ online: projectPresence(req.project.id), role: req.projectRole });
 });
 
 router.post('/', (req, res) => {
@@ -74,14 +80,22 @@ router.post('/', (req, res) => {
   res.status(201).json({ project: projectRow(row) });
 });
 
-router.patch('/:id', (req, res) => {
-  const project = ownProject(req, res);
-  if (!project) return;
+router.patch('/:id', accessProject('editor'), (req, res) => {
+  const project = req.project;
   const parsed = projectSchema.partial().safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'invalid_input', details: parsed.error.issues });
   }
   const d = parsed.data;
+  /* Un editeur peut changer l'icone (bouton du studio) mais pas les reglages
+     structurels du projet (nom, namespace, version, description) : ceux-ci
+     restent reserves au proprietaire. */
+  if (req.projectRole !== 'owner') {
+    const forbiddenKeys = Object.keys(d).filter((k) => k !== 'icon');
+    if (forbiddenKeys.length) {
+      return res.status(403).json({ error: 'forbidden', requiredRole: 'owner', fields: forbiddenKeys });
+    }
+  }
   let icon = project.icon;
   if ('icon' in d && d.icon !== undefined) {
     if (d.icon && !isValidPngDataUri(d.icon)) {
@@ -89,30 +103,36 @@ router.patch('/:id', (req, res) => {
     }
     icon = d.icon;
   }
-  queries.updateProject.run(
+  /* updateProjectById : pas de filtre user_id, l'acces est deja verifie
+     par accessProject (un editeur peut modifier les metadonnees). */
+  queries.updateProjectById.run(
     d.name ?? project.name,
     d.namespace ?? project.namespace,
     d.minecraftVersion ?? project.minecraft_version,
     d.description ?? project.description,
     icon,
-    project.id,
-    req.user.id
+    project.id
   );
-  const row = queries.getProject.get(project.id, req.user.id);
-  res.json({ project: projectRow(row) });
+  const row = queries.getProjectById.get(project.id);
+  /* Les autres editeurs voient le changement sans recharger la page. */
+  broadcastToProject(project.id, {
+    type: 'project:changed',
+    by: req.user.username,
+    userId: req.user.id,
+    project: projectRow(row, 'owner'),
+  }, { exceptUserId: req.user.id });
+  res.json({ project: projectRow(row, req.projectRole) });
 });
 
-router.delete('/:id', (req, res) => {
-  const project = ownProject(req, res);
-  if (!project) return;
-  queries.deleteProject.run(project.id, req.user.id);
+router.delete('/:id', accessProject('owner'), (req, res) => {
+  queries.deleteProject.run(req.project.id, req.user.id);
+  /* Previent les collaborateurs eventuellement connectes sur ce projet. */
+  broadcastToProject(req.project.id, { type: 'project:removed', projectId: req.project.id });
   res.json({ ok: true });
 });
 
-router.get('/:id/files', (req, res) => {
-  const project = ownProject(req, res);
-  if (!project) return;
-  res.json({ files: queries.listFiles.all(project.id) });
+router.get('/:id/files', accessProject('viewer'), (req, res) => {
+  res.json({ files: queries.listFiles.all(req.project.id) });
 });
 
 const saveFilesSchema = z.object({
@@ -120,9 +140,8 @@ const saveFilesSchema = z.object({
   deletes: z.array(filePath).max(500),
 });
 
-router.put('/:id/files', (req, res) => {
-  const project = ownProject(req, res);
-  if (!project) return;
+router.put('/:id/files', accessProject('editor'), (req, res) => {
+  const project = req.project;
   const parsed = saveFilesSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'invalid_input', details: parsed.error.issues });
@@ -134,35 +153,50 @@ router.put('/:id/files', (req, res) => {
     queries.touchProject.run(project.id);
   });
   tx();
+  /* Diffusion temps reel : chaque fichier sauvegarde est pousse aux autres
+     editeurs connectes (le WebSocket ne persiste rien, il ne fait que
+     relayer ce qui vient d'etre ecrit en base). */
+  for (const f of saves) {
+    broadcastToProject(project.id, {
+      type: 'file:change', path: f.path, content: f.content, by: req.user.username, userId: req.user.id,
+    }, { exceptUserId: req.user.id });
+  }
+  for (const p of deletes) {
+    broadcastToProject(project.id, {
+      type: 'file:delete', path: p, by: req.user.username, userId: req.user.id,
+    }, { exceptUserId: req.user.id });
+  }
   res.json({ ok: true });
 });
 
-router.post('/:id/icon', (req, res) => {
-  const project = ownProject(req, res);
-  if (!project) return;
+router.post('/:id/icon', accessProject('editor'), (req, res) => {
+  const project = req.project;
   const icon = typeof req.body?.icon === 'string' ? req.body.icon : '';
   if (icon && !isValidPngDataUri(icon)) {
     return res.status(400).json({ error: 'invalid_icon' });
   }
-  queries.updateProject.run(project.name, project.namespace, project.minecraft_version, project.description, icon, project.id, req.user.id);
+  queries.updateProjectById.run(project.name, project.namespace, project.minecraft_version, project.description, icon, project.id);
+  broadcastToProject(project.id, { type: 'project:icon', by: req.user.username }, { exceptUserId: req.user.id });
   res.json({ ok: true });
 });
 
 /* Icône du projet (PNG base64 en data URI). */
-router.get('/:id/icon', (req, res) => {
-  const project = queries.getProject.get(Number(req.params.id), req.user.id);
-  if (!project) return res.status(404).json({ error: 'project_not_found' });
-  if (!project.icon) return res.status(404).json({ error: 'no_icon' });
-  const base64 = project.icon.split(',')[1] || '';
+router.get('/:id/icon', accessProject('viewer'), (req, res) => {
+  if (!req.project.icon) return res.status(404).json({ error: 'no_icon' });
+  const base64 = req.project.icon.split(',')[1] || '';
   res.set('Content-Type', 'image/png');
   res.send(Buffer.from(base64, 'base64'));
 });
 
-router.delete('/:id/icon', (req, res) => {
-  const project = ownProject(req, res);
-  if (!project) return;
-  queries.updateProject.run(project.name, project.namespace, project.minecraft_version, project.description, '', project.id, req.user.id);
+router.delete('/:id/icon', accessProject('editor'), (req, res) => {
+  const project = req.project;
+  queries.updateProjectById.run(project.name, project.namespace, project.minecraft_version, project.description, '', project.id);
+  broadcastToProject(project.id, { type: 'project:icon', by: req.user.username }, { exceptUserId: req.user.id });
   res.json({ ok: true });
 });
+
+/* Sous-routeurs : partage (collaborateurs) et publication Modrinth. */
+router.use('/:id/collaborators', collaboratorsRouter);
+router.use('/:id/modrinth', projectModrinthRouter);
 
 export default router;

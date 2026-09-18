@@ -26,7 +26,23 @@ export async function exportToZip({ name, files, icon }) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-/* Import d'un ZIP datapack ; retourne { name, namespace, minecraftVersion, description, files, icon } ou null. */
+/* Publication Modrinth : retourne le ZIP du datapack en base64
+   (envoye tel quel a l'API, qui le transmet en multipart). */
+export async function buildZipBase64({ files, icon }) {
+  const zip = new JSZip();
+  for (const f of files) {
+    zip.file(f.path, f.content);
+  }
+  if (icon) {
+    try {
+      const base64 = icon.split(',')[1];
+      zip.file('pack.png', base64, { base64: true });
+    } catch { /* icone invalide : ignoree */ }
+  }
+  return zip.generateAsync({ type: 'base64', compression: 'DEFLATE' });
+}
+
+/* --- Import d'un ZIP datapack ; retourne { name, namespace, minecraftVersion, description, files, icon } ou null. */
 export async function importFromZip(file) {
   const zip = await JSZip.loadAsync(file);
   const entries = Object.values(zip.files).filter((f) => !f.dir);
